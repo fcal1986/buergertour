@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#1a3a5c" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Bürgertour" />
+  <link rel="manifest" href="manifest.json" />
+  <title>Bürgertour 2026</title>
+
+  <!-- Google Fonts: Playfair Display + Source Sans 3 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================
+       CSS VARIABLES & RESET
+    ============================ */
+    :root {
+      --navy:       #1a3a5c;
+      --navy-deep:  #112843;
+      --blue:       #2a6496;
+      --blue-light: #3a8bc4;
+      --gold:       #c9a94e;
+      --gold-light: #e2c97e;
+      --bg:         #f4f6f9;
+      --surface:    #ffffff;
+      --surface2:   #eef1f6;
+      --text:       #1e2d3d;
+      --text-soft:  #5a6e82;
+      --border:     #d4dde8;
+      --success:    #2e7d52;
+      --danger:     #c0392b;
+      --radius:     14px;
+      --shadow:     0 2px 12px rgba(26,58,92,.10);
+      --shadow-lg:  0 6px 28px rgba(26,58,92,.16);
+      --tab-h:      64px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: 'Source Sans 3', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ============================
+       LAYOUT
+    ============================ */
+    #app {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* ============================
+       HEADER
+    ============================ */
+    #top-header {
+      background: var(--navy);
+      color: #fff;
+      padding: 18px 20px 14px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-lg);
+    }
+
+    #top-header .title-block h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: .3px;
+      line-height: 1.2;
+    }
+
+    #top-header .title-block p {
+      font-size: .8rem;
+      color: rgba(255,255,255,.65);
+      margin-top: 2px;
+      font-weight: 300;
+    }
+
+    #header-date {
+      background: var(--gold);
+      color: var(--navy-deep);
+      font-size: .72rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+      align-self: center;
+    }
+
+    /* ============================
+       MAIN CONTENT AREA
+    ============================ */
+    #content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 14px calc(var(--tab-h) + 12px);
+      scroll-behavior: smooth;
+    }
+
+    /* ============================
+       BOTTOM TAB BAR
+    ============================ */
+    #tab-bar {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      height: var(--tab-h);
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 200;
+      box-shadow: 0 -3px 18px rgba(26,58,92,.10);
+      padding: 0 4px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 8px 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-soft);
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: .68rem;
+      font-weight: 600;
+      transition: color .18s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .tab-btn svg {
+      width: 22px; height: 22px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform .18s;
+    }
+
+    .tab-btn.active {
+      color: var(--blue);
+    }
+
+    .tab-btn.active svg {
+      transform: translateY(-1px);
+    }
+
+    /* ============================
+       VIEWS (sections)
+    ============================ */
+    .view { display: none; }
+    .view.active { display: block; animation: fadeIn .22s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============================
+       CARDS
+    ============================ */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(212,221,232,.6);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .card-icon {
+      width: 38px; height: 38px;
+      background: var(--navy);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .card-icon svg {
+      width: 20px; height: 20px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--navy);
+    }
+
+    .card-subtitle {
+      font-size: .78rem;
+      color: var(--text-soft);
+      margin-top: 1px;
+    }
+
+    /* ============================
+       SECTION TITLES
+    ============================ */
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin: 6px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--gold);
+      display: inline-block;
+    }
+
+    /* ============================
+       DASHBOARD
+    ============================ */
+    .hero-card {
+      background: linear-gradient(135deg, var(--navy-deep) 0%, var(--blue) 100%);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .hero-card::after {
+      content: '';
+      position: absolute;
+      right: -30px; top: -30px;
+      width: 130px; height: 130px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.06);
+    }
+
+    .hero-card h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      margin-bottom: 4px;
+    }
+
+    .hero-card p { font-size: .85rem; color: rgba(255,255,255,.8); font-weight: 300; }
+
+    .badge {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--navy-deep);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: .72rem;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .quick-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 12px;
+      border: 1px solid rgba(212,221,232,.6);
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+      -webkit-tap-highlight-color: transparent;
+      text-align: center;
+    }
+
+    .quick-card:active { transform: scale(.97); box-shadow: none; }
+
+    .quick-card .qc-icon {
+      font-size: 1.6rem;
+      margin-bottom: 6px;
+    }
+
+    .quick-card .qc-label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--navy);
+    }
+
+    /* Next event */
+    .next-event-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      border-left: 4px solid var(--gold);
+    }
+
+    .next-event-card .ne-label {
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      margin-bottom: 4px;
+    }
+
+    .next-event-card .ne-title { font-weight: 600; font-size: 1rem; color: var(--navy); }
+    .next-event-card .ne-meta { font-size: .8rem; color: var(--text-soft); margin-top: 4px; }
+
+    /* ============================
+       SCHEDULE
+    ============================ */
+    .day-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 18px 0 10px;
+    }
+
+    .day-badge {
+      background: var(--navy);
+      color: #fff;
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-size: .78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .day-date-label {
+      font-size: .82rem;
+      color: var(--text-soft);
+      font-weight: 400;
+    }
+
+    .schedule-item {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      border: 1px solid rgba(212,221,232,.5);
+    }
+
+    .si-time {
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--blue);
+      min-width: 44px;
+      padding-top: 2px;
+    }
+
+    .si-body .si-place {
+      font-weight: 600;
+      font-size: .92rem;
+      color: var(--navy);
+    }
+
+    .si-body .si-desc {
+      font-size: .8rem;
+      color: var(--text-soft);
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    /* ============================
+       DESTINATIONS
+    ============================ */
+    .dest-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(212,221,232,.5);
+    }
+
+    .dest-card-header {
+      background: var(--navy);
+      color: #fff;
+      padding: 14px 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .dest-card-header h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+    }
+
+    .dest-card-header small {
+      font-size: .75rem;
+      color: rgba(255,255,255,.7);
+      display: block;
+      margin-top: 2px;
+    }
+
+    .dest-chevron {
+      transition: transform .22s;
+    }
+
+    .dest-chevron.open { transform: rotate(180deg); }
+
+    .dest-body {
+      padding: 0 16px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .35s ease, padding .25s ease;
+    }
+
+    .dest-body.open {
+      max-height: 600px;
+      padding: 14px 16px;
+    }
+
+    .dest-section {
+      margin-bottom: 12px;
+    }
+
+    .dest-section-title {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .9px;
+      color: var(--gold);
+      margin-bottom: 5px;
+    }
+
+    .dest-section p {
+      font-size: .85rem;
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    .facts-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .facts-list li {
+      font-size: .82rem;
+      color: var(--text);
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .facts-list li::before {
+      content: '•';
+      color: var(--gold);
+      font-size: 1.1rem;
+      line-height: 1.2;
+      flex-shrink: 0;
+    }
+
+    /* ============================
+       CONTACTS
+    ============================ */
+    .contact-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(212,221,232,.5);
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .contact-avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .contact-info .role {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--blue);
+    }
+
+    .contact-info .name {
+      font-weight: 600;
+      font-size: .95rem;
+      color: var(--navy);
+    }
+
+    .contact-links {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    .contact-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: .75rem;
+      font-weight: 600;
+      color: var(--blue);
+      text-decoration: none;
+      background: var(--surface2);
+      padding: 4px 10px;
+      border-radius: 20px;
+      transition: background .15s;
+    }
+
+    .contact-link:active { background: var(--border); }
+
+    /* ============================
+       NOTES
+    ============================ */
+    #notes-textarea {
+      width: 100%;
+      min-height: 260px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: .92rem;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--surface);
+      resize: vertical;
+      outline: none;
+      box-shadow: var(--shadow);
+      transition: border-color .18s;
+    }
+
+    #notes-textarea:focus { border-color: var(--blue); }
+
+    /* ============================
+       DATA (Import/Export)
+    ============================ */
+    .data-action-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(212,221,232,.5);
+    }
+
+    .data-action-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+
+    .data-action-desc {
+      font-size: .8rem;
+      color: var(--text-soft);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    /* ============================
+       BUTTONS
+    ============================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s, opacity .15s;
+      -webkit-tap-highlight-color: transparent;
+      width: 100%;
+    }
+
+    .btn:active { transform: scale(.97); opacity: .92; }
+
+    .btn-primary {
+      background: var(--navy);
+      color: #fff;
+      box-shadow: 0 3px 12px rgba(26,58,92,.25);
+    }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--navy);
+      border: 1.5px solid var(--border);
+    }
+
+    .btn-danger {
+      background: #fdf0ef;
+      color: var(--danger);
+      border: 1.5px solid #f5c6c2;
+    }
+
+    .btn-gold {
+      background: var(--gold);
+      color: var(--navy-deep);
+    }
+
+    .btn svg {
+      width: 18px; height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ============================
+       TOAST / FEEDBACK
+    ============================ */
+    #toast {
+      position: fixed;
+      bottom: calc(var(--tab-h) + 16px);
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--navy-deep);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: .82rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity .25s, transform .25s;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 999;
+      box-shadow: var(--shadow-lg);
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #toast.error { background: var(--danger); }
+
+    /* ============================
+       MISC HELPERS
+    ============================ */
+    .mt-8  { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .text-soft { color: var(--text-soft); font-size: .82rem; }
+    .divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+    .info-banner {
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: .8rem;
+      color: var(--text-soft);
+      border: 1px solid var(--border);
+      line-height: 1.5;
+    }
+
+    /* Scrollbar */
+    #content::-webkit-scrollbar { width: 4px; }
+    #content::-webkit-scrollbar-track { background: transparent; }
+    #content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- HEADER -->
+  <header id="top-header">
+    <div class="title-block">
+      <h1 id="header-title">Bürgertour 2026</h1>
+      <p id="header-subtitle">Dein Reisebegleiter</p>
+    </div>
+    <div id="header-date"></div>
+  </header>
+
+  <!-- CONTENT -->
+  <main id="content">
+
+    <!-- ====== DASHBOARD ====== -->
+    <section id="view-dashboard" class="view active">
+      <div class="hero-card">
+        <h2 id="dash-trip-title">Bürgertour 2026</h2>
+        <p id="dash-trip-desc">5 Tage · 5 Ziele · 1 unvergessliche Reise</p>
+        <span class="badge" id="dash-trip-dates">05.–09. Mai 2026</span>
+      </div>
+
+      <div class="next-event-card" id="dash-next-event">
+        <div class="ne-label">Nächster Programmpunkt</div>
+        <div class="ne-title" id="dash-next-title">–</div>
+        <div class="ne-meta" id="dash-next-meta">–</div>
+      </div>
+
+      <div class="quick-grid">
+        <div class="quick-card" onclick="showView('schedule')">
+          <div class="qc-icon">🗓️</div>
+          <div class="qc-label">Reiseplan</div>
+        </div>
+        <div class="quick-card" onclick="showView('destinations')">
+          <div class="qc-icon">🏛️</div>
+          <div class="qc-label">Ziele</div>
+        </div>
+        <div class="quick-card" onclick="showView('contacts')">
+          <div class="qc-icon">📞</div>
+          <div class="qc-label">Kontakte</div>
+        </div>
+        <div class="quick-card" onclick="showView('notes')">
+          <div class="qc-icon">📝</div>
+          <div class="qc-label">Notizen</div>
+        </div>
+      </div>
+
+      <div class="info-banner">
+        📍 Alle Daten werden lokal auf diesem Gerät gespeichert. Nutze &bdquo;Daten&ldquo; zum Sichern und Importieren.
+      </div>
+    </section>
+
+    <!-- ====== SCHEDULE ====== -->
+    <section id="view-schedule" class="view">
+      <div class="section-title">Reiseplan</div>
+      <div id="schedule-container"><!-- dynamisch --></div>
+    </section>
+
+    <!-- ====== DESTINATIONS ====== -->
+    <section id="view-destinations" class="view">
+      <div class="section-title">Ziele &amp; Geschichte</div>
+      <div id="destinations-container"><!-- dynamisch --></div>
+    </section>
+
+    <!-- ====== CONTACTS ====== -->
+    <section id="view-contacts" class="view">
+      <div class="section-title">Kontakte</div>
+      <div id="contacts-container"><!-- dynamisch --></div>
+    </section>
+
+    <!-- ====== NOTES ====== -->
+    <section id="view-notes" class="view">
+      <div class="section-title">Meine Notizen</div>
+      <textarea id="notes-textarea" placeholder="Persönliche Notizen, Eindrücke, Gedanken…"></textarea>
+      <button class="btn btn-primary mt-12" onclick="saveNotes()">
+        <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Notizen speichern
+      </button>
+    </section>
+
+    <!-- ====== DATA ====== -->
+    <section id="view-data" class="view">
+      <div class="section-title">Daten</div>
+
+      <div class="data-action-card">
+        <div class="data-action-title">💾 Export</div>
+        <div class="data-action-desc">Alle Reisedaten als JSON-Datei exportieren und sichern.</div>
+        <button class="btn btn-primary" onclick="exportData()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Daten exportieren
+        </button>
+      </div>
+
+      <div class="data-action-card">
+        <div class="data-action-title">📂 Import</div>
+        <div class="data-action-desc">Gespeicherte JSON-Datei importieren. Vorhandene Daten werden dabei überschrieben.</div>
+        <label class="btn btn-secondary" style="cursor:pointer">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Datei wählen &amp; importieren
+          <input type="file" accept=".json" style="display:none" onchange="importData(event)" />
+        </label>
+      </div>
+
+      <div class="data-action-card">
+        <div class="data-action-title">🔄 Beispieldaten laden</div>
+        <div class="data-action-desc">Alle Daten auf die eingebauten Beispielinhalte zurücksetzen.</div>
+        <button class="btn btn-danger" onclick="loadDefaults()">
+          <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.95"/></svg>
+          Beispieldaten wiederherstellen
+        </button>
+      </div>
+
+      <div class="info-banner mt-8">
+        ℹ️ Datenformat: JSON v1.0. Exportiere regelmäßig, um keine Daten zu verlieren.
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BOTTOM TAB BAR -->
+  <nav id="tab-bar">
+    <button class="tab-btn active" data-view="dashboard" onclick="showView('dashboard')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Start
+    </button>
+    <button class="tab-btn" data-view="schedule" onclick="showView('schedule')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Plan
+    </button>
+    <button class="tab-btn" data-view="destinations" onclick="showView('destinations')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 5.5-8 13-8 13S4 15.5 4 10a8 8 0 0 1 8-8z"/></svg>
+      Ziele
+    </button>
+    <button class="tab-btn" data-view="contacts" onclick="showView('contacts')">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Kontakte
+    </button>
+    <button class="tab-btn" data-view="notes" onclick="showView('notes')">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Notizen
+    </button>
+    <button class="tab-btn" data-view="data" onclick="showView('data')">
+      <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      Daten
+    </button>
+  </nav>
+
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+/* =============================================================
+   DEFAULT DATA
+   Anpassen nach Bedarf – später über Import/Export
+============================================================= */
+const DEFAULT_DATA = {
+  meta: { version: "1.0" },
+  trip: {
+    title: "Bürgertour 2026",
+    subtitle: "5 Tage · 5 Ziele · 1 unvergessliche Reise",
+    dates: "05.–09. Mai 2026",
+    startDate: "2026-05-05"
+  },
+  schedule: [
+    {
+      day: 1,
+      date: "2026-05-05",
+      label: "Tag 1 – Ankunft & Auftakt",
+      items: [
+        { id: "s1a", time: "10:00", place: "Abfahrt Heimatstadt", description: "Treffpunkt am Rathaus, Abfahrt mit dem Reisebus." },
+        { id: "s1b", time: "14:00", place: "Ankunft Köln", description: "Bezug der Hotelzimmer, kurze Einführung durch Reiseleitung." },
+        { id: "s1c", time: "16:00", place: "Altstadtrundgang Köln", description: "Spaziergang durch die historische Altstadt mit dem Dom." },
+        { id: "s1d", time: "19:30", place: "Gemeinsames Abendessen", description: "Kölsch & Rheinische Küche im Brauhaus." }
+      ]
+    },
+    {
+      day: 2,
+      date: "2026-05-06",
+      label: "Tag 2 – Kölner Dom & Museum",
+      items: [
+        { id: "s2a", time: "09:00", place: "Kölner Dom", description: "Führung im Inneren des UNESCO-Weltkulturerbes." },
+        { id: "s2b", time: "11:30", place: "Römermuseum CCAA", description: "Besichtigung der römischen Stadtgeschichte." },
+        { id: "s2c", time: "14:00", place: "Mittagspause Freizeit", description: "Einkaufen oder eigene Erkundung der Innenstadt." },
+        { id: "s2d", time: "17:00", place: "Rheinpromenade", description: "Spaziergang mit Blick auf Dom und Rhein." },
+        { id: "s2e", time: "19:00", place: "Abendessen Hotel", description: "Gemeinsames Abendessen im Hotelrestaurant." }
+      ]
+    },
+    {
+      day: 3,
+      date: "2026-05-07",
+      label: "Tag 3 – Bonn & Beethoven",
+      items: [
+        { id: "s3a", time: "08:30", place: "Abfahrt nach Bonn", description: "Busfahrt entlang des Rheins, ca. 45 Min." },
+        { id: "s3b", time: "10:00", place: "Beethoven-Haus Bonn", description: "Führung im Geburtshaus Beethovens." },
+        { id: "s3c", time: "12:00", place: "Bundesviertel Bonn", description: "Rundgang durch das ehemalige Regierungsviertel." },
+        { id: "s3d", time: "14:30", place: "Haus der Geschichte", description: "Besichtigung der deutschen Zeitgeschichte seit 1945." },
+        { id: "s3e", time: "19:30", place: "Rückkehr Köln & Abendessen", description: "Freies Abendessen in der Altstadt." }
+      ]
+    },
+    {
+      day: 4,
+      date: "2026-05-08",
+      label: "Tag 4 – Aachen",
+      items: [
+        { id: "s4a", time: "08:00", place: "Abfahrt nach Aachen", description: "Busfahrt ca. 70 Min. Richtung Aachen." },
+        { id: "s4b", time: "10:00", place: "Aachener Dom", description: "Führung im karolingischen Weltkulturerbe, Thron Karls des Großen." },
+        { id: "s4c", time: "12:30", place: "Aachener Rathaus", description: "Besichtigung des historischen Rathauses auf dem Katschhof." },
+        { id: "s4d", time: "14:30", place: "Stadtbummel Aachen", description: "Freie Zeit in der Altstadt und Kauf von Aachener Printen." },
+        { id: "s4e", time: "18:00", place: "Rückkehr & freier Abend", description: "Selbstorganisiertes Abendessen in Köln." }
+      ]
+    },
+    {
+      day: 5,
+      date: "2026-05-09",
+      label: "Tag 5 – Abschluss & Heimreise",
+      items: [
+        { id: "s5a", time: "09:00", place: "Abschlussfrühstück", description: "Gemeinsames Frühstück und Hotelcheck-out." },
+        { id: "s5b", time: "10:30", place: "Letzte Freizeit Köln", description: "Souvenireinkauf, Kaffee, letzter Blick auf den Dom." },
+        { id: "s5c", time: "12:00", place: "Abfahrt Heimreise", description: "Treffpunkt am Busbahnhof, gemeinsame Rückreise." },
+        { id: "s5d", time: "16:30", place: "Ankunft Heimatstadt", description: "Ankunft am Rathaus. Ende der offiziellen Reise." }
+      ]
+    }
+  ],
+  destinations: [
+    {
+      id: "d1",
+      name: "Köln",
+      location: "Nordrhein-Westfalen",
+      history: "Köln ist eine der ältesten Städte Deutschlands. Gegründet um 38 v. Chr. als römische Kolonie „Ara Ubiorum", erhielt sie 50 n. Chr. unter Kaiser Claudius Stadtrecht als „Colonia Claudia Ara Agrippinensium" (CCAA). Bereits im Mittelalter war Köln eine der bedeutendsten Städte nördlich der Alpen. Der Kölner Dom – 1248 begonnen und erst 1880 vollendet – ist das beherrschende Wahrzeichen der Stadt.",
+      facts: [
+        "Größte Stadt Nordrhein-Westfalens, ca. 1 Million Einwohner",
+        "Kölner Dom – UNESCO Weltkulturerbe seit 1996",
+        "Heimat des weltberühmten Kölner Karnevals",
+        "Über 30 Museen und 100 Galerien",
+        "Vier Kölner Romanische Kirchen stehen auf der Kulturerbeliste"
+      ],
+      hints: "ÖPNV: Tageskarte empfohlen. Fußgängerzone direkt am Dom. Brauhaus-Tipp: früh reservieren."
+    },
+    {
+      id: "d2",
+      name: "Bonn",
+      location: "Nordrhein-Westfalen",
+      history: "Bonn blickt auf eine über 2.000-jährige Geschichte zurück. Als Bundeshöhle gründete Kurfürst Clemens August im 18. Jh. eine glanzvolle Residenz. Von 1949 bis 1990 war Bonn Hauptstadt der Bundesrepublik Deutschland – eine Tatsache, die die Stadt bis heute prägt. Das Bonner Regierungsviertel und das Haus der Geschichte erzählen von dieser besonderen deutschen Epoche.",
+      facts: [
+        "Geburtsstadt Ludwig van Beethovens (1770–1827)",
+        "Ehemalige Bundeshauptstadt 1949–1990",
+        "Zweitsitz zahlreicher Bundesministerien",
+        "UN-Stadt – Sitz von über 20 UN-Organisationen",
+        "Rheinauenpark – beliebte Grünfläche am Rhein"
+      ],
+      hints: "Beethoven-Haus: Tickets vorab online kaufen. Haus der Geschichte: Eintritt frei."
+    },
+    {
+      id: "d3",
+      name: "Aachen",
+      location: "Nordrhein-Westfalen",
+      history: "Aachen war die bevorzugte Residenz Karls des Großen und Mittelpunkt des Karolingischen Reiches um 800 n. Chr. Der Aachener Dom – einer der ersten UNESCO-Welterbestätten Deutschlands (1978) – beherbergt den Thron Karls des Großen und gilt als Wiege des Abendlandes. Dreißig deutsche Könige wurden hier zwischen 936 und 1531 gekrönt.",
+      facts: [
+        "Karl der Große ließ den Dom um 800 n. Chr. erbauen",
+        "Erster UNESCO-Welterbeort Deutschlands (1978)",
+        "Aachener Printen – bekannter Lebkuchen, typische Spezialität",
+        "Dreiländereck: Deutschland, Belgien, Niederlande",
+        "Dreißig deutsche Könige in Aachen gekrönt"
+      ],
+      hints: "Dom-Führungen: buchen via website. Schatzkammer extra beachten. Parkplätze begrenzt – Bus ideal."
+    }
+  ],
+  contacts: [
+    {
+      id: "c1",
+      role: "Reiseleitung",
+      name: "Maria Müller",
+      phone: "+49 151 12345678",
+      email: "mueller@buergerreise.de"
+    },
+    {
+      id: "c2",
+      role: "Hotel Köln",
+      name: "Hotel Domblick",
+      phone: "+49 221 9876540",
+      email: "info@hotel-domblick.de"
+    },
+    {
+      id: "c3",
+      role: "Busunternehmen",
+      name: "Reisebus – Fahrer Klaus",
+      phone: "+49 160 77654321",
+      email: ""
+    },
+    {
+      id: "c4",
+      role: "Notfall",
+      name: "Notruf Allgemein",
+      phone: "112",
+      email: ""
+    },
+    {
+      id: "c5",
+      role: "Notfall",
+      name: "Polizei",
+      phone: "110",
+      email: ""
+    }
+  ],
+  notes: ""
+};
+
+/* =============================================================
+   STATE
+============================================================= */
+let appData = {};
+
+/* =============================================================
+   STORAGE
+============================================================= */
+const STORAGE_KEY = 'buergerreise_v1';
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      appData = JSON.parse(raw);
+    } else {
+      appData = JSON.parse(JSON.stringify(DEFAULT_DATA)); // deep copy
+      saveToStorage();
+    }
+  } catch (e) {
+    console.warn('Ladefehler, Standarddaten werden verwendet:', e);
+    appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  }
+}
+
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+  } catch (e) {
+    console.error('Speicherfehler:', e);
+    showToast('Speicherfehler – localStorage voll?', true);
+  }
+}
+
+function loadDefaults() {
+  if (!confirm('Alle Daten auf die Beispieldaten zurücksetzen? Dies überschreibt alle vorhandenen Inhalte.')) return;
+  appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  saveToStorage();
+  render();
+  showToast('Beispieldaten wiederhergestellt ✓');
+}
+
+/* =============================================================
+   NAVIGATION
+============================================================= */
+let currentView = 'dashboard';
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === id);
+  });
+  currentView = id;
+  document.getElementById('content').scrollTop = 0;
+
+  // Lazy render on view
+  if (id === 'notes') renderNotes();
+}
+
+/* =============================================================
+   RENDER
+============================================================= */
+function render() {
+  renderHeader();
+  renderDashboard();
+  renderSchedule();
+  renderDestinations();
+  renderContacts();
+  renderNotes();
+}
+
+function renderHeader() {
+  document.getElementById('header-title').textContent = appData.trip?.title || 'Bürgertour';
+  document.getElementById('header-date').textContent = todayFormatted();
+}
+
+function todayFormatted() {
+  return new Date().toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
+}
+
+/* -- DASHBOARD -- */
+function renderDashboard() {
+  const t = appData.trip || {};
+  document.getElementById('dash-trip-title').textContent = t.title || 'Bürgertour';
+  document.getElementById('dash-trip-desc').textContent = t.subtitle || '';
+  document.getElementById('dash-trip-dates').textContent = t.dates || '';
+
+  // Find next upcoming event
+  const now = new Date();
+  let nextItem = null, nextDay = null;
+
+  for (const day of (appData.schedule || [])) {
+    for (const item of (day.items || [])) {
+      const eventDT = parseDateTimeStr(day.date, item.time);
+      if (eventDT && eventDT >= now) {
+        if (!nextItem || eventDT < parseDateTimeStr(nextDay.date, nextItem.time)) {
+          nextItem = item;
+          nextDay = day;
+        }
+      }
+    }
+  }
+
+  const titleEl = document.getElementById('dash-next-title');
+  const metaEl  = document.getElementById('dash-next-meta');
+
+  if (nextItem) {
+    titleEl.textContent = nextItem.place;
+    metaEl.textContent  = `${formatDate(nextDay.date)} · ${nextItem.time} Uhr · ${nextItem.description}`;
+  } else {
+    titleEl.textContent = 'Kein weiterer Programmpunkt';
+    metaEl.textContent  = 'Die Reise ist abgeschlossen oder noch nicht begonnen.';
+  }
+}
+
+function parseDateTimeStr(dateStr, timeStr) {
+  if (!dateStr || !timeStr) return null;
+  try {
+    return new Date(`${dateStr}T${timeStr}:00`);
+  } catch { return null; }
+}
+
+function formatDate(dateStr) {
+  try {
+    return new Date(dateStr + 'T12:00:00').toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
+  } catch { return dateStr; }
+}
+
+/* -- SCHEDULE -- */
+function renderSchedule() {
+  const container = document.getElementById('schedule-container');
+  const html = (appData.schedule || []).map(day => `
+    <div class="day-header">
+      <span class="day-badge">Tag ${day.day}</span>
+      <span class="day-date-label">${formatDate(day.date)} · ${day.label || ''}</span>
+    </div>
+    ${(day.items || []).map(item => `
+      <div class="schedule-item">
+        <div class="si-time">${item.time}</div>
+        <div class="si-body">
+          <div class="si-place">${esc(item.place)}</div>
+          <div class="si-desc">${esc(item.description)}</div>
+        </div>
+      </div>
+    `).join('')}
+  `).join('');
+  container.innerHTML = html || '<p class="text-soft">Kein Reiseplan vorhanden.</p>';
+}
+
+/* -- DESTINATIONS -- */
+function renderDestinations() {
+  const container = document.getElementById('destinations-container');
+  const html = (appData.destinations || []).map(dest => `
+    <div class="dest-card">
+      <div class="dest-card-header" onclick="toggleDest('${dest.id}')">
+        <div>
+          <h3>${esc(dest.name)}</h3>
+          <small>${esc(dest.location)}</small>
+        </div>
+        <svg class="dest-chevron" id="chev-${dest.id}" viewBox="0 0 24 24" width="20" height="20" stroke="white" fill="none" stroke-width="2" stroke-linecap="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="dest-body" id="body-${dest.id}">
+        <div class="dest-section">
+          <div class="dest-section-title">Geschichte</div>
+          <p>${esc(dest.history)}</p>
+        </div>
+        <div class="divider"></div>
+        <div class="dest-section">
+          <div class="dest-section-title">Interessante Fakten</div>
+          <ul class="facts-list">
+            ${(dest.facts || []).map(f => `<li>${esc(f)}</li>`).join('')}
+          </ul>
+        </div>
+        <div class="divider"></div>
+        <div class="dest-section">
+          <div class="dest-section-title">Praktische Hinweise</div>
+          <p>${esc(dest.hints)}</p>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  container.innerHTML = html || '<p class="text-soft">Keine Ziele vorhanden.</p>';
+}
+
+function toggleDest(id) {
+  const body = document.getElementById('body-' + id);
+  const chev = document.getElementById('chev-' + id);
+  const isOpen = body.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.dest-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.dest-chevron').forEach(c => c.classList.remove('open'));
+  // Toggle clicked
+  if (!isOpen) {
+    body.classList.add('open');
+    chev.classList.add('open');
+  }
+}
+
+/* -- CONTACTS -- */
+function renderContacts() {
+  const container = document.getElementById('contacts-container');
+  const html = (appData.contacts || []).map(c => {
+    const initials = c.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    const phoneLink = c.phone ? `<a href="tel:${c.phone.replace(/\s/g,'')}" class="contact-link">📞 ${esc(c.phone)}</a>` : '';
+    const mailLink  = c.email ? `<a href="mailto:${c.email}" class="contact-link">✉️ ${esc(c.email)}</a>` : '';
+    return `
+      <div class="contact-card">
+        <div class="contact-avatar">${initials}</div>
+        <div class="contact-info" style="flex:1;min-width:0">
+          <div class="role">${esc(c.role)}</div>
+          <div class="name">${esc(c.name)}</div>
+          <div class="contact-links">${phoneLink}${mailLink}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  container.innerHTML = html || '<p class="text-soft">Keine Kontakte vorhanden.</p>';
+}
+
+/* -- NOTES -- */
+function renderNotes() {
+  document.getElementById('notes-textarea').value = appData.notes || '';
+}
+
+function saveNotes() {
+  appData.notes = document.getElementById('notes-textarea').value;
+  saveToStorage();
+  showToast('Notizen gespeichert ✓');
+}
+
+/* =============================================================
+   EXPORT / IMPORT
+============================================================= */
+function exportData() {
+  // Auto-save notes before export
+  appData.notes = document.getElementById('notes-textarea').value;
+  appData.meta = { version: "1.0", exportDate: new Date().toISOString() };
+  saveToStorage();
+
+  const json = JSON.stringify(appData, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const filename = `buergerreise_${new Date().toISOString().slice(0,10)}.json`;
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Export erfolgreich: ' + filename);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+
+      // Validation
+      if (typeof parsed !== 'object' || parsed === null) throw new Error('Keine gültige JSON-Struktur.');
+      if (!parsed.trip)        throw new Error('Feld "trip" fehlt.');
+      if (!parsed.schedule)    throw new Error('Feld "schedule" fehlt.');
+      if (!Array.isArray(parsed.schedule)) throw new Error('"schedule" muss ein Array sein.');
+
+      if (!confirm(`Datei "${file.name}" importieren? Alle vorhandenen Daten werden überschrieben.`)) return;
+
+      appData = parsed;
+      saveToStorage();
+      render();
+      showToast('Import erfolgreich ✓');
+    } catch (err) {
+      showToast('Import fehlgeschlagen: ' + err.message, true);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = ''; // Reset input
+}
+
+/* =============================================================
+   TOAST
+============================================================= */
+let toastTimer = null;
+function showToast(msg, isError = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.toggle('error', isError);
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+/* =============================================================
+   HELPER
+============================================================= */
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* =============================================================
+   INIT
+============================================================= */
+loadData();
+render();
+
+// Auto-save notes on unload
+window.addEventListener('beforeunload', () => {
+  appData.notes = document.getElementById('notes-textarea').value;
+  saveToStorage();
+});
+</script>
+</body>
+</html>

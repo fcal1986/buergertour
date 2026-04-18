@@ -1,1 +1,75 @@
+name: Deploy to GitHub Pages
 
+# Ausführen bei jedem Push auf den main-Branch
+on:
+  push:
+    branches:
+      - main
+  # Manuelles Auslösen über das GitHub Actions UI ermöglichen
+  workflow_dispatch:
+
+# Berechtigungen für GitHub Pages Deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Nur einen gleichzeitigen Deployment-Prozess erlauben
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      # 1. Repository-Code auschecken
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Platzhalter in index.html durch echte Secrets ersetzen
+      #    Die Secrets werden in GitHub unter Settings > Secrets hinterlegt
+      #    und nie im Code oder Git-Verlauf gespeichert.
+      - name: Inject Supabase credentials
+        run: |
+          sed -i "s|'DEINE_SUPABASE_URL'|'${{ secrets.SUPABASE_URL }}'|g" index.html
+          sed -i "s|'DEIN_ANON_KEY'|'${{ secrets.SUPABASE_ANON_KEY }}'|g" index.html
+          # Optional: Trip-ID überschreiben falls du sie als Secret pflegst
+          # sed -i "s|'00000000-0000-0000-0000-000000000001'|'${{ secrets.TRIP_ID }}'|g" index.html
+
+      # 3. Kontrolle: Prüfen ob die Ersetzung funktioniert hat
+      #    (gibt "FOUND" aus wenn Keys gesetzt wurden, ohne die Keys selbst zu loggen)
+      - name: Verify injection
+        run: |
+          if grep -q "DEINE_SUPABASE_URL" index.html; then
+            echo "⚠️  WARNUNG: SUPABASE_URL wurde nicht ersetzt – Secret gesetzt?"
+            exit 1
+          else
+            echo "✅ SUPABASE_URL erfolgreich injiziert"
+          fi
+          if grep -q "DEIN_ANON_KEY" index.html; then
+            echo "⚠️  WARNUNG: SUPABASE_ANON_KEY wurde nicht ersetzt – Secret gesetzt?"
+            exit 1
+          else
+            echo "✅ SUPABASE_ANON_KEY erfolgreich injiziert"
+          fi
+
+      # 4. GitHub Pages konfigurieren
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      # 5. Dateien als Artefakt packen
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Gesamtes Repository-Verzeichnis deployen
+          path: '.'
+
+      # 6. Auf GitHub Pages deployen
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -435,6 +435,66 @@ html, body {
 #modal-body   { padding: 16px 18px; overflow-y: auto; flex: 1; }
 #modal-footer { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; gap: 9px; }
 #modal-footer .btn { margin-top: 0; flex: 1; }
+
+/* ============================================================
+   DEBUG LOGGER – nur für Admin sichtbar (5x Header tippen)
+============================================================ */
+#debug-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.7); z-index: 9000;
+  align-items: flex-end; justify-content: center; padding: 0;
+}
+#debug-overlay.open { display: flex; }
+#debug-panel {
+  background: #0d1117; color: #e6edf3;
+  width: 100%; max-width: 480px; height: 85dvh;
+  border-radius: 18px 18px 0 0;
+  display: flex; flex-direction: column;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  box-shadow: 0 -8px 40px rgba(0,0,0,.6);
+  animation: slideUp .2s ease;
+}
+#debug-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px 10px; border-bottom: 1px solid #30363d; flex-shrink: 0;
+}
+#debug-header h3 { font-size: .85rem; color: #58a6ff; font-family: monospace; }
+#debug-header-btns { display: flex; gap: 8px; }
+#debug-clear-btn, #debug-close-btn {
+  padding: 4px 10px; border-radius: 6px; border: 1px solid #30363d;
+  background: #161b22; color: #8b949e; font-size: .72rem;
+  cursor: pointer; font-family: monospace;
+}
+#debug-clear-btn:hover { color: #f85149; border-color: #f85149; }
+#debug-close-btn:hover { color: #e6edf3; border-color: #58a6ff; }
+#debug-log {
+  flex: 1; overflow-y: auto; padding: 10px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+  scroll-behavior: smooth;
+}
+#debug-log::-webkit-scrollbar { width: 4px; }
+#debug-log::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+.dlog { font-size: .72rem; line-height: 1.5; padding: 3px 0; border-bottom: 1px solid #161b22; word-break: break-all; }
+.dlog .dt  { color: #8b949e; margin-right: 6px; flex-shrink: 0; }
+.dlog .dm  { flex: 1; }
+.dlog.info  .dm { color: #e6edf3; }
+.dlog.ok    .dm { color: #3fb950; }
+.dlog.warn  .dm { color: #d29922; }
+.dlog.error .dm { color: #f85149; }
+.dlog.data  .dm { color: #79c0ff; }
+.dlog { display: flex; }
+#debug-footer {
+  padding: 8px 14px 14px; border-top: 1px solid #30363d; flex-shrink: 0;
+  font-size: .68rem; color: #8b949e; text-align: center;
+}
+#debug-tap-hint {
+  position: fixed; bottom: calc(var(--tab-h) + 60px); right: 12px;
+  background: rgba(88,166,255,.15); border: 1px solid rgba(88,166,255,.3);
+  color: #58a6ff; font-size: .62rem; padding: 3px 8px; border-radius: 10px;
+  pointer-events: none; opacity: 0; transition: opacity .3s; z-index: 8000;
+  font-family: monospace;
+}
+#debug-tap-hint.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -655,6 +715,23 @@ html, body {
     </button>
   </nav>
 
+
+<!-- DEBUG LOGGER DIALOG -->
+<div id="debug-overlay">
+  <div id="debug-panel">
+    <div id="debug-header">
+      <h3>🛠 Debug Log – Bürgertour</h3>
+      <div id="debug-header-btns">
+        <button id="debug-clear-btn" onclick="dbClear()">clear</button>
+        <button id="debug-close-btn" onclick="dbClose()">✕ schließen</button>
+      </div>
+    </div>
+    <div id="debug-log"></div>
+    <div id="debug-footer">5× Header antippen zum Öffnen · Logs werden nicht gespeichert</div>
+  </div>
+</div>
+<div id="debug-tap-hint"></div>
+
 </div><!-- /app -->
 
 <!-- MODAL -->
@@ -697,7 +774,11 @@ const TRIP_ID       = '00000000-0000-0000-0000-000000000001';
 let _sb = null;
 function getSB() {
   if (_sb) return _sb;
-  if (!SUPABASE_URL.startsWith('http') || SUPABASE_ANON === 'DEIN_ANON_KEY') return null;
+  if (!SUPABASE_URL.startsWith('http') || SUPABASE_ANON === 'DEIN_ANON_KEY') {
+    DB.log('Supabase NICHT konfiguriert – Platzhalter-Keys erkannt', 'warn');
+    return null;
+  }
+  DB.log('Supabase Client init: ' + SUPABASE_URL, 'info');
   _sb = createClient(SUPABASE_URL, SUPABASE_ANON);
   return _sb;
 }
@@ -817,10 +898,14 @@ window.doLogin = async function() {
     errEl.style.display = 'block';
     btn.disabled = false; btn.textContent = 'Anmelden'; return;
   }
+  DB.log('Auth: Login-Versuch für ' + email, 'info');
   const { error } = await sbAuth.signInWithPassword({ email, password: pass });
   if (error) {
+    DB.log('Auth: Login FEHLER – ' + (error.message || String(error)), 'error');
     errEl.textContent = 'Anmeldung fehlgeschlagen: ' + (error.message || 'Unbekannter Fehler');
     errEl.style.display = 'block';
+  } else {
+    DB.log('Auth: Login erfolgreich – ' + email, 'ok');
   }
   btn.disabled = false; btn.textContent = 'Anmelden';
 };
@@ -933,8 +1018,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   await bootData();
 
   // Auth check
+  DB.log('Auth: Session wird geprüft…', 'info');
   const { data: { session } } = await sbAuth.getSession();
-  if (session) { adminState.session = session; adminState.user = session.user; showAdminLoggedIn(); }
+  if (session) {
+    DB.log('Auth: Session aktiv – ' + session.user?.email, 'ok');
+    adminState.session = session; adminState.user = session.user; showAdminLoggedIn();
+  } else {
+    DB.log('Auth: Keine aktive Session (nicht eingeloggt)', 'info');
+  }
 
   sbAuth.onAuthStateChange((_ev, session) => {
     adminState.session = session;
@@ -949,9 +1040,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 // DATA FETCH
 // ============================================================
 async function bootData() {
+  DB.log('App gestartet – Host: ' + location.hostname, 'info');
+  DB.log('Online: ' + navigator.onLine, navigator.onLine ? 'ok' : 'warn');
   loading(true);
   const ok = await fetchAll();
-  if (!ok) await loadCached();
+  if (!ok) {
+    DB.log('Netzwerk-Fetch fehlgeschlagen – lade Cache…', 'warn');
+    await loadCached();
+  }
   render();
   loading(false);
 }
@@ -976,8 +1072,13 @@ async function fetchAll() {
     data.destinations = sortDests(destsR.data || []);
     data.contacts     = ctR.data || [];
     await idbSet('app_data', data);
+    DB.log('Supabase Daten geladen: Trip="' + data.trip?.title + '" · ' + data.days.length + ' Tage · ' + data.destinations.length + ' Ziele · ' + data.contacts.length + ' Kontakte', 'ok');
     return true;
-  } catch(e) { console.warn('[fetch]', e); return false; }
+  } catch(e) {
+    DB.log('Supabase Fetch FEHLER: ' + (e?.message || String(e)), 'error');
+    console.warn('[fetch]', e);
+    return false;
+  }
 }
 
 function sortDays(days) {
@@ -993,7 +1094,13 @@ function sortDests(dests) {
 
 async function loadCached() {
   const c = await idbGet('app_data');
-  if (c) { data = c; toast('Offline – gespeicherte Daten', 'warn'); }
+  if (c) {
+    data = c;
+    DB.log('Cache geladen: ' + (c.trip?.title || 'unbekannt'), 'warn');
+    toast('Offline – gespeicherte Daten', 'warn');
+  } else {
+    DB.log('Kein Cache vorhanden – keine Daten verfügbar', 'error');
+  }
 }
 
 window.addEventListener('online',  () => { toast('Wieder online'); bootData(); });
@@ -1402,9 +1509,114 @@ function registerSW() {
   const isPreview = host.includes('claudeusercontent') || host === 'localhost' || host === '127.0.0.1';
   if (isPreview) { console.log('[SW] Übersprungen (Preview/Dev-Umgebung)'); return; }
   navigator.serviceWorker.register('./sw.js')
-    .then(() => console.log('[SW] registriert'))
-    .catch(e => console.warn('[SW]', e));
+    .then(() => DB.log('Service Worker registriert', 'ok'))
+    .catch(e => DB.log('Service Worker FEHLER: ' + e.message, 'error'));
 }
+
+// ============================================================
+// DEBUG LOGGER
+// Öffnen: 5× schnell auf den Header tippen/klicken
+// Unsichtbar für normale Nutzer
+// ============================================================
+const DB = {
+  _logs: [],
+  _open: false,
+  _taps: 0,
+  _tapTimer: null,
+
+  log(msg, type = 'info') {
+    const now = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const entry = { t: now, m: String(msg), type };
+    this._logs.push(entry);
+    // Auch native console spiegeln
+    const fn = type === 'error' ? console.error : type === 'warn' ? console.warn : console.log;
+    fn('[DBG]', msg);
+    if (this._open) this._renderEntry(entry);
+  },
+
+  _renderEntry(entry) {
+    const log = document.getElementById('debug-log');
+    if (!log) return;
+    const row = document.createElement('div');
+    row.className = 'dlog ' + entry.type;
+    row.innerHTML = '<span class="dt">' + entry.t + '</span><span class="dm">' + 
+      String(entry.m).replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</span>';
+    log.appendChild(row);
+    log.scrollTop = log.scrollHeight;
+  },
+
+  open() {
+    const overlay = document.getElementById('debug-overlay');
+    const log     = document.getElementById('debug-log');
+    if (!overlay || !log) return;
+    log.innerHTML = '';
+    this._logs.forEach(e => this._renderEntry(e));
+    overlay.classList.add('open');
+    this._open = true;
+    log.scrollTop = log.scrollHeight;
+  },
+
+  close() {
+    const overlay = document.getElementById('debug-overlay');
+    if (overlay) overlay.classList.remove('open');
+    this._open = false;
+  },
+
+  clear() {
+    this._logs = [];
+    const log = document.getElementById('debug-log');
+    if (log) log.innerHTML = '';
+  },
+
+  tap() {
+    this._taps++;
+    const hint = document.getElementById('debug-tap-hint');
+    const remaining = 5 - this._taps;
+    if (hint && remaining > 0) {
+      hint.textContent = remaining + '× tippen…';
+      hint.classList.add('show');
+      clearTimeout(this._tapTimer);
+      this._tapTimer = setTimeout(() => { hint.classList.remove('show'); this._taps = 0; }, 1500);
+    }
+    if (this._taps >= 5) {
+      this._taps = 0;
+      clearTimeout(this._tapTimer);
+      if (hint) hint.classList.remove('show');
+      this.open();
+    }
+  }
+};
+
+// Global verfügbar machen
+window.dbClose = () => DB.close();
+window.dbClear = () => DB.clear();
+
+// Header-Tap-Listener
+document.addEventListener('DOMContentLoaded', () => {
+  const hdr = document.getElementById('top-header');
+  if (hdr) {
+    hdr.addEventListener('click',      () => DB.tap());
+    hdr.addEventListener('touchstart', () => DB.tap(), { passive: true });
+  }
+  // Backdrop schließt Dialog
+  document.getElementById('debug-overlay')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('debug-overlay')) DB.close();
+  });
+});
+
+// console.error und console.warn abfangen → auch im Log anzeigen
+const _origError = console.error.bind(console);
+const _origWarn  = console.warn.bind(console);
+console.error = (...args) => { DB.log(args.join(' '), 'error'); _origError(...args); };
+console.warn  = (...args) => { DB.log(args.join(' '), 'warn');  _origWarn(...args);  };
+
+// Globale Fehler abfangen
+window.addEventListener('error', e => {
+  DB.log('UNCAUGHT: ' + e.message + ' (' + (e.filename||'').split('/').pop() + ':' + e.lineno + ')', 'error');
+});
+window.addEventListener('unhandledrejection', e => {
+  DB.log('PROMISE: ' + (e.reason?.message || String(e.reason)), 'error');
+});
 
 </script>
 </body>

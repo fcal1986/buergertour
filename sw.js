@@ -1,67 +1,40 @@
 // ============================================================
-// Service Worker – Bürgertour App
-// Caches alle App-Dateien für Offline-Nutzung
+// sw.js – Service Worker
+// Cache-First für App-Shell, Network-First für Supabase-Calls
 // ============================================================
 
-const CACHE_NAME = 'buergerreise-v1';
+const CACHE = 'buergerreise-v3';
+const SHELL = ['./', './index.html', './manifest.json'];
 
-// Dateien, die offline verfügbar sein sollen
-const FILES_TO_CACHE = [
-  './',
-  './index.html',
-  './manifest.json'
-];
-
-// Installation: Dateien in den Cache laden
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Dateien werden gecacht');
-      return cache.addAll(FILES_TO_CACHE);
-    })
-  );
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));
   self.skipWaiting();
 });
 
-// Aktivierung: alten Cache löschen
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keyList) =>
-      Promise.all(keyList.map((key) => {
-        if (key !== CACHE_NAME) {
-          console.log('[SW] Alter Cache wird gelöscht:', key);
-          return caches.delete(key);
-        }
-      }))
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
 });
 
-// Fetch: Cache-First-Strategie (offline-first)
-self.addEventListener('fetch', (event) => {
-  // Nur GET-Anfragen cachen
-  if (event.request.method !== 'GET') return;
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  // Supabase + Google Fonts: nicht cachen, immer frisch
+  if (e.request.url.includes('supabase.co') ||
+      e.request.url.includes('fonts.gstatic.com') ||
+      e.request.url.includes('fonts.googleapis.com') ||
+      e.request.url.includes('cdn.jsdelivr.net')) return;
 
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse; // Aus Cache liefern
-      }
-      // Netzwerk-Fallback mit Caching der Antwort
-      return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200) {
-          return networkResponse;
-        }
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-        return networkResponse;
-      }).catch(() => {
-        // Offline-Fallback: index.html zurückliefern
-        return caches.match('./index.html');
-      });
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      const fromNet = fetch(e.request).then(res => {
+        if (res.ok) caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+        return res;
+      }).catch(() => cached || caches.match('./index.html'));
+      return cached || fromNet;
     })
   );
 });

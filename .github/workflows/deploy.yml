@@ -29,7 +29,7 @@ jobs:
     steps:
       # 1. Repository-Code auschecken
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       # 2. Platzhalter in index.html durch echte Secrets ersetzen
       #    Die Secrets werden in GitHub unter Settings > Secrets hinterlegt
@@ -42,7 +42,6 @@ jobs:
           # sed -i "s|'00000000-0000-0000-0000-000000000001'|'${{ secrets.TRIP_ID }}'|g" index.html
 
       # 3. Kontrolle: Prüfen ob die Ersetzung funktioniert hat
-      #    (gibt "FOUND" aus wenn Keys gesetzt wurden, ohne die Keys selbst zu loggen)
       - name: Verify injection
         run: |
           if grep -q "DEINE_SUPABASE_URL" index.html; then
@@ -60,16 +59,15 @@ jobs:
 
       # 4. GitHub Pages konfigurieren
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
 
       # 5. Dateien als Artefakt packen
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Gesamtes Repository-Verzeichnis deployen
           path: '.'
 
       # 6. Auf GitHub Pages deployen
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v4.0.5

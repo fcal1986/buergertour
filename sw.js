@@ -22,19 +22,33 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  // Supabase + Google Fonts: nicht cachen, immer frisch
-  if (e.request.url.includes('supabase.co') ||
-      e.request.url.includes('fonts.gstatic.com') ||
-      e.request.url.includes('fonts.googleapis.com') ||
-      e.request.url.includes('cdn.jsdelivr.net')) return;
+
+  // Externe Dienste nie cachen – immer direkt durchleiten
+  const url = e.request.url;
+  if (url.includes('supabase.co') ||
+      url.includes('fonts.gstatic.com') ||
+      url.includes('fonts.googleapis.com') ||
+      url.includes('cdn.jsdelivr.net')) return;
 
   e.respondWith(
     caches.match(e.request).then(cached => {
-      const fromNet = fetch(e.request).then(res => {
-        if (res.ok) caches.open(CACHE).then(c => c.put(e.request, res.clone()));
-        return res;
-      }).catch(() => cached || caches.match('./index.html'));
-      return cached || fromNet;
+      // Netzwerk-Request mit korrektem Clone-Handling
+      const networkFetch = fetch(e.request.clone()).then(response => {
+        // Nur gültige Responses cachen
+        if (!response || !response.ok || response.type === 'opaque') {
+          return response;
+        }
+        // Response klonen BEVOR sie gelesen wird
+        const toCache = response.clone();
+        caches.open(CACHE).then(c => c.put(e.request, toCache));
+        return response;
+      }).catch(() => {
+        // Offline: Cache oder Fallback
+        return cached || caches.match('./index.html');
+      });
+
+      // Cache vorhanden: sofort zurückgeben, Netzwerk im Hintergrund aktualisieren
+      return cached || networkFetch;
     })
   );
 });

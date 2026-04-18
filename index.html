@@ -71,6 +71,7 @@ html, body {
 ============================================================ */
 #top-header {
   background: var(--navy);
+  position: relative;
   color: #fff;
   padding: 16px 18px 12px;
   display: flex;
@@ -488,11 +489,11 @@ html, body {
   font-size: .68rem; color: #8b949e; text-align: center;
 }
 #debug-tap-hint {
-  position: fixed; bottom: calc(var(--tab-h) + 60px); right: 12px;
-  background: rgba(88,166,255,.15); border: 1px solid rgba(88,166,255,.3);
-  color: #58a6ff; font-size: .62rem; padding: 3px 8px; border-radius: 10px;
-  pointer-events: none; opacity: 0; transition: opacity .3s; z-index: 8000;
-  font-family: monospace;
+  position: fixed; top: 58px; left: 8px;
+  background: rgba(88,166,255,.2); border: 1px solid rgba(88,166,255,.4);
+  color: #58a6ff; font-size: .65rem; padding: 4px 10px; border-radius: 10px;
+  pointer-events: none; opacity: 0; transition: opacity .25s; z-index: 8000;
+  font-family: monospace; font-weight: 600;
 }
 #debug-tap-hint.show { opacity: 1; }
 </style>
@@ -509,6 +510,8 @@ html, body {
     </div>
     <span id="header-admin-badge">Admin</span>
     <div id="header-date"></div>
+    <!-- Unsichtbarer Debug-Tap-Bereich: 5× antippen öffnet Log -->
+    <div id="debug-tap-zone" style="position:absolute;top:0;left:0;width:48px;height:100%;cursor:default;-webkit-tap-highlight-color:transparent;z-index:10;"></div>
   </header>
 
   <!-- CONTENT -->
@@ -1591,12 +1594,20 @@ const DB = {
 window.dbClose = () => DB.close();
 window.dbClear = () => DB.clear();
 
-// Header-Tap-Listener
+// Debug-Tap-Zone Listener (oben links im Header, 48px breit, unsichtbar)
 document.addEventListener('DOMContentLoaded', () => {
-  const hdr = document.getElementById('top-header');
-  if (hdr) {
-    hdr.addEventListener('click',      () => DB.tap());
-    hdr.addEventListener('touchstart', () => DB.tap(), { passive: true });
+  const zone = document.getElementById('debug-tap-zone');
+  if (zone) {
+    // Touch (Smartphone)
+    zone.addEventListener('touchstart', e => {
+      e.preventDefault();  // verhindert versehentliches Auslösen anderer Events
+      DB.tap();
+    }, { passive: false });
+    // Click (Desktop / Browser)
+    zone.addEventListener('click', e => {
+      e.stopPropagation();
+      DB.tap();
+    });
   }
   // Backdrop schließt Dialog
   document.getElementById('debug-overlay')?.addEventListener('click', e => {

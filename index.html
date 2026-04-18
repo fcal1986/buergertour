@@ -776,7 +776,7 @@ html, body {
 <script type="module">
 
 // import MUSS als allererste ausführbare Zeile stehen (ES Module Spec)
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/+esm';
 
 // ============================================================
 // CONFIG – Trage hier deine Supabase-Zugangsdaten ein
@@ -806,9 +806,11 @@ function getSB() {
   DB.log('Key-Format: ' + SUPABASE_ANON.slice(0,15) + '...', 'info');
   try {
     _sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+    DB.log('createClient OK', 'ok');
     return _sb;
   } catch(e) {
     DB.log('createClient FEHLER: ' + e.message, 'error');
+    DB.log('Tipp: Verwende den Legacy anon Key aus Supabase Settings > API > Legacy anon, service_role API keys', 'warn');
     return null;
   }
 }

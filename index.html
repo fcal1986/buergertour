@@ -793,19 +793,19 @@ const TRIP_ID       = '00000000-0000-0000-0000-000000000001';
 let _sb = null;
 function getSB() {
   if (_sb) return _sb;
-  // Exakte Werte loggen um Injection-Problem zu diagnostizieren
   const urlVal = SUPABASE_URL;
   const keyVal = SUPABASE_ANON;
-  const urlOk  = urlVal.startsWith('http');
-  const keyOk  = keyVal !== 'DEIN_ANON_KEY' && keyVal.length > 20;
-  DB.log('getSB: urlOk=' + urlOk + ' keyOk=' + keyOk + ' keyLen=' + keyVal.length, 'info');
-  DB.log('getSB: url[0..8]="' + urlVal.slice(0,8) + '" key[0..10]="' + keyVal.slice(0,10) + '"', 'info');
+  // Validierung NUR per Länge und URL-Format – kein String-Vergleich mit dem
+  // Platzhalter, da sed im Workflow ALLE Vorkommen des Platzhalters ersetzt!
+  const urlOk = urlVal.startsWith('https://') && urlVal.includes('.supabase.co');
+  const keyOk = keyVal.length >= 100;
+  DB.log('getSB: urlOk=' + urlOk + ' keyLen=' + keyVal.length + ' keyOk=' + keyOk, 'info');
   if (!urlOk || !keyOk) {
-    DB.log('getSB: FEHLER – ungültige Keys', 'error');
+    DB.log('getSB: Konfiguration unvollstaendig (URL oder Key fehlt)', 'error');
     return null;
   }
   try {
-    DB.log('getSB: createClient wird aufgerufen…', 'info');
+    DB.log('getSB: createClient wird aufgerufen...', 'info');
     _sb = createClient(urlVal, keyVal);
     DB.log('getSB: createClient OK', 'ok');
     return _sb;

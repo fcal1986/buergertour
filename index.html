@@ -793,24 +793,24 @@ const TRIP_ID       = '00000000-0000-0000-0000-000000000001';
 let _sb = null;
 function getSB() {
   if (_sb) return _sb;
-  // Platzhalter-Erkennung: URL muss http sein, Key darf nicht der Platzhalter sein
-  // Unterstützt altes Format (eyJhbGci...) und neues Supabase Format (sb_publishable_...)
-  const urlOk  = SUPABASE_URL.startsWith('http');
-  const keyOk  = SUPABASE_ANON !== 'DEIN_ANON_KEY' && SUPABASE_ANON.length > 20;
+  // Exakte Werte loggen um Injection-Problem zu diagnostizieren
+  const urlVal = SUPABASE_URL;
+  const keyVal = SUPABASE_ANON;
+  const urlOk  = urlVal.startsWith('http');
+  const keyOk  = keyVal !== 'DEIN_ANON_KEY' && keyVal.length > 20;
+  DB.log('getSB: urlOk=' + urlOk + ' keyOk=' + keyOk + ' keyLen=' + keyVal.length, 'info');
+  DB.log('getSB: url[0..8]="' + urlVal.slice(0,8) + '" key[0..10]="' + keyVal.slice(0,10) + '"', 'info');
   if (!urlOk || !keyOk) {
-    DB.log('Supabase NICHT konfiguriert – Platzhalter-Keys erkannt', 'warn');
-    DB.log('URL: ' + SUPABASE_URL.slice(0,40) + ' | Key: ' + SUPABASE_ANON.slice(0,20) + '...', 'warn');
+    DB.log('getSB: FEHLER – ungültige Keys', 'error');
     return null;
   }
-  DB.log('Supabase Client init: ' + SUPABASE_URL, 'info');
-  DB.log('Key-Format: ' + SUPABASE_ANON.slice(0,15) + '...', 'info');
   try {
-    _sb = createClient(SUPABASE_URL, SUPABASE_ANON);
-    DB.log('createClient OK', 'ok');
+    DB.log('getSB: createClient wird aufgerufen…', 'info');
+    _sb = createClient(urlVal, keyVal);
+    DB.log('getSB: createClient OK', 'ok');
     return _sb;
   } catch(e) {
-    DB.log('createClient FEHLER: ' + e.message, 'error');
-    DB.log('Tipp: Verwende den Legacy anon Key aus Supabase Settings > API > Legacy anon, service_role API keys', 'warn');
+    DB.log('getSB: createClient FEHLER: ' + e.message, 'error');
     return null;
   }
 }

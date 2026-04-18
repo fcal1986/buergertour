@@ -793,13 +793,24 @@ const TRIP_ID       = '00000000-0000-0000-0000-000000000001';
 let _sb = null;
 function getSB() {
   if (_sb) return _sb;
-  if (!SUPABASE_URL.startsWith('http') || SUPABASE_ANON === 'DEIN_ANON_KEY') {
+  // Platzhalter-Erkennung: URL muss http sein, Key darf nicht der Platzhalter sein
+  // Unterstützt altes Format (eyJhbGci...) und neues Supabase Format (sb_publishable_...)
+  const urlOk  = SUPABASE_URL.startsWith('http');
+  const keyOk  = SUPABASE_ANON !== 'DEIN_ANON_KEY' && SUPABASE_ANON.length > 20;
+  if (!urlOk || !keyOk) {
     DB.log('Supabase NICHT konfiguriert – Platzhalter-Keys erkannt', 'warn');
+    DB.log('URL: ' + SUPABASE_URL.slice(0,40) + ' | Key: ' + SUPABASE_ANON.slice(0,20) + '...', 'warn');
     return null;
   }
   DB.log('Supabase Client init: ' + SUPABASE_URL, 'info');
-  _sb = createClient(SUPABASE_URL, SUPABASE_ANON);
-  return _sb;
+  DB.log('Key-Format: ' + SUPABASE_ANON.slice(0,15) + '...', 'info');
+  try {
+    _sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+    return _sb;
+  } catch(e) {
+    DB.log('createClient FEHLER: ' + e.message, 'error');
+    return null;
+  }
 }
 // Hilfsfunktion: Supabase-Query ausführen, bei fehlendem Client Fehler zurückgeben
 function sbq(fn) {
@@ -1061,6 +1072,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function bootData() {
   DB.log('App gestartet – Host: ' + location.hostname, 'info');
   DB.log('Online: ' + navigator.onLine, navigator.onLine ? 'ok' : 'warn');
+  DB.log('Config URL: ' + SUPABASE_URL.slice(0,50), 'info');
+  DB.log('Config Key: ' + SUPABASE_ANON.slice(0,25) + '... (len=' + SUPABASE_ANON.length + ')', 'info');
+  DB.log('Build: __BUILD_TIME__', 'info');
   loading(true);
   const ok = await fetchAll();
   if (!ok) {

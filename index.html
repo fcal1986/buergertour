@@ -509,68 +509,59 @@ html, body {
 
 
 
-/* ============================================================
-   WETTER WIDGET
-============================================================ */
+/* ── WETTER ── */
 .weather-card {
   background: linear-gradient(135deg, #1a6b9a 0%, #2a9d8f 100%);
   border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px;
   color: #fff; display: flex; align-items: center; gap: 14px;
   box-shadow: var(--shadow-lg);
 }
-.weather-icon { font-size: 2.4rem; flex-shrink: 0; }
-.weather-info { flex: 1; }
+.weather-icon { font-size: 2.4rem; flex-shrink: 0; line-height: 1; }
 .weather-temp { font-size: 1.8rem; font-weight: 700; line-height: 1; }
 .weather-desc { font-size: .8rem; color: rgba(255,255,255,.85); margin-top: 2px; }
-.weather-details { font-size: .74rem; color: rgba(255,255,255,.75); margin-top: 4px; }
-.weather-location { font-size: .7rem; color: rgba(255,255,255,.6); margin-top: 1px; }
-#weather-loading { font-size: .8rem; color: var(--text-soft); padding: 10px 0; }
+.weather-meta { font-size: .74rem; color: rgba(255,255,255,.72); margin-top: 4px; }
+.weather-city { font-size: .68rem; color: rgba(255,255,255,.55); margin-top: 2px; }
 
-/* ============================================================
-   MAPS LINKS IN SCHEDULE
-============================================================ */
-.si-maps-link {
+/* ── MAPS LINK ── */
+.maps-link {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: .7rem; font-weight: 600; color: var(--blue);
   text-decoration: none; background: var(--surface2);
   padding: 3px 8px; border-radius: 20px; margin-top: 5px;
-  transition: background .15s;
 }
-.si-maps-link:active { background: var(--border); }
+.maps-link:active { background: var(--border); }
 
-/* ============================================================
-   INFO SEITE
-============================================================ */
-.info-section { margin-bottom: 14px; }
+/* ── INFO SEITE ── */
 .info-card {
   background: var(--surface); border-radius: var(--radius);
   box-shadow: var(--shadow); border: 1px solid rgba(212,221,232,.45);
   overflow: hidden; margin-bottom: 10px;
 }
-.info-card-header {
+.info-card-hdr {
   background: var(--navy); color: #fff;
   padding: 11px 15px; font-family: 'Playfair Display', serif;
-  font-size: .95rem; font-weight: 600; display: flex;
-  align-items: center; gap: 9px;
+  font-size: .95rem; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
 }
-.info-card-header .ico { font-size: 1.1rem; }
-.info-card-body { padding: 12px 15px; }
+.info-card-body { padding: 2px 0; }
 .info-row {
-  display: flex; gap: 10px; align-items: flex-start;
-  padding: 6px 0; border-bottom: 1px solid var(--border);
-  font-size: .83rem;
+  display: flex; gap: 10px; padding: 8px 15px;
+  border-bottom: 1px solid var(--border); font-size: .82rem;
+  align-items: flex-start;
 }
 .info-row:last-child { border-bottom: none; }
-.info-row .ir-label { color: var(--text-soft); min-width: 100px; flex-shrink: 0; font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .4px; padding-top: 1px; }
-.info-row .ir-value { color: var(--text); flex: 1; line-height: 1.4; }
-.info-row a { color: var(--blue); text-decoration: none; }
+.ir-lbl { color: var(--text-soft); min-width: 90px; flex-shrink: 0;
+          font-weight: 600; font-size: .72rem; text-transform: uppercase;
+          letter-spacing: .4px; padding-top: 2px; }
+.ir-val { color: var(--text); flex: 1; line-height: 1.5; }
+.ir-val a { color: var(--blue); text-decoration: none; }
 .phrase-row {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 6px 0; border-bottom: 1px solid var(--border); font-size: .82rem;
+  padding: 7px 15px; border-bottom: 1px solid var(--border); font-size: .82rem;
 }
 .phrase-row:last-child { border-bottom: none; }
-.phrase-de { color: var(--text-soft); }
-.phrase-it { color: var(--navy); font-weight: 600; font-style: italic; }
+.ph-de { color: var(--text-soft); }
+.ph-it { color: var(--navy); font-weight: 600; font-style: italic; }
 </style>
 </head>
 <body>
@@ -597,7 +588,6 @@ html, body {
         <p  id="dash-sub">5 Tage · Nordrhein-Westfalen</p>
         <span class="badge" id="dash-dates">Mai 2026</span>
       </div>
-      <!-- Wetter-Widget -->
       <div id="weather-widget"></div>
 
       <div class="next-event-card">
@@ -619,7 +609,7 @@ html, body {
           <div class="qc-icon">📝</div><div class="qc-label">Notizen</div>
         </div>
         <div class="quick-card" onclick="showView('info')">
-          <div class="qc-icon">ℹ️</div><div class="qc-label">Reiseinfos</div>
+          <div class="qc-icon">&#x2139;&#xFE0F;</div><div class="qc-label">Reiseinfos</div>
         </div>
       </div>
       <div class="info-banner">
@@ -665,58 +655,59 @@ html, body {
       <div class="section-title">Reiseinfos</div>
 
       <div class="info-card">
-        <div class="info-card-header"><span class="ico">✈️</span> Flugdaten</div>
+        <div class="info-card-hdr">&#x2708;&#xFE0F; Flugdaten</div>
         <div class="info-card-body">
-          <div class="info-row"><span class="ir-label">Hinflug</span><span class="ir-value">EW 9814 · Düsseldorf → Catania<br>07:20 Uhr ab · 10:00 Uhr an</span></div>
-          <div class="info-row"><span class="ir-label">Rückflug</span><span class="ir-value">EW 9815 · Catania → Düsseldorf<br>13:55 Uhr ab · 16:40 Uhr an</span></div>
-          <div class="info-row"><span class="ir-label">Airline</span><span class="ir-value">Eurowings</span></div>
+          <div class="info-row"><span class="ir-lbl">Hinflug</span><span class="ir-val">EW&nbsp;9814 &middot; D&uuml;sseldorf &rarr; Catania<br>07:20 Uhr ab &middot; 10:00 Uhr an</span></div>
+          <div class="info-row"><span class="ir-lbl">R&uuml;ckflug</span><span class="ir-val">EW&nbsp;9815 &middot; Catania &rarr; D&uuml;sseldorf<br>13:55 Uhr ab &middot; 16:40 Uhr an</span></div>
+          <div class="info-row"><span class="ir-lbl">Airline</span><span class="ir-val">Eurowings</span></div>
         </div>
       </div>
 
       <div class="info-card">
-        <div class="info-card-header"><span class="ico">🏨</span> Hotels</div>
+        <div class="info-card-hdr">&#x1F3E8; Hotels</div>
         <div class="info-card-body">
-          <div class="info-row"><span class="ir-label">Caltagirone</span><span class="ir-value">Hotel Luigi Sturzo ***<br>Via Mons. F. Fasola, 39 – 95041 Caltagirone CT<br><a href="tel:+39093327196">+39 0933 27196</a></span></div>
-          <div class="info-row"><span class="ir-label">Siracusa</span><span class="ir-value">Hotel Parco delle Fontane ****<br>Viale Scala Greca, 325 – 96100 Siracusa SR</span></div>
+          <div class="info-row"><span class="ir-lbl">Caltagirone</span><span class="ir-val">Hotel Luigi Sturzo ***<br>Via Mons. F. Fasola, 39 &ndash; 95041 Caltagirone CT<br><a href="tel:+39093327196">+39 0933 27196</a></span></div>
+          <div class="info-row"><span class="ir-lbl">Siracusa</span><span class="ir-val">Hotel Parco delle Fontane ****<br>Viale Scala Greca, 325 &ndash; 96100 Siracusa SR</span></div>
         </div>
       </div>
 
       <div class="info-card">
-        <div class="info-card-header"><span class="ico">🇮🇹</span> Praktisches</div>
+        <div class="info-card-hdr">&#x1F1EE;&#x1F1F9; Praktisches</div>
         <div class="info-card-body">
-          <div class="info-row"><span class="ir-label">Zeitzone</span><span class="ir-value">CEST – gleiche Zeit wie Deutschland</span></div>
-          <div class="info-row"><span class="ir-label">Währung</span><span class="ir-value">Euro (€) – Karte wird überall akzeptiert</span></div>
-          <div class="info-row"><span class="ir-label">Steckdosen</span><span class="ir-value">Typ F / Typ L – Adapter empfohlen</span></div>
-          <div class="info-row"><span class="ir-label">Notruf</span><span class="ir-value"><a href="tel:112">112</a> (EU-Notruf) · <a href="tel:118">118</a> (Krankenwagen IT)</span></div>
-          <div class="info-row"><span class="ir-label">Wetter Mai</span><span class="ir-value">22–28 °C · trocken · viel Sonne</span></div>
-          <div class="info-row"><span class="ir-label">Trinkwasser</span><span class="ir-value">Leitungswasser in Sizilien nicht trinken – Flaschenwasser kaufen</span></div>
+          <div class="info-row"><span class="ir-lbl">Zeitzone</span><span class="ir-val">CEST &ndash; gleiche Zeit wie Deutschland</span></div>
+          <div class="info-row"><span class="ir-lbl">W&auml;hrung</span><span class="ir-val">Euro (&euro;) &ndash; Karte wird &uuml;berall akzeptiert</span></div>
+          <div class="info-row"><span class="ir-lbl">Steckdosen</span><span class="ir-val">Typ F / Typ L &ndash; Adapter empfohlen</span></div>
+          <div class="info-row"><span class="ir-lbl">Notruf</span><span class="ir-val"><a href="tel:112">112</a> (EU) &middot; <a href="tel:118">118</a> (Krankenwagen IT)</span></div>
+          <div class="info-row"><span class="ir-lbl">Wetter Mai</span><span class="ir-val">22&ndash;28&deg;C &middot; trocken &middot; viel Sonne</span></div>
+          <div class="info-row"><span class="ir-lbl">Trinkwasser</span><span class="ir-val">Leitungswasser nicht trinken &ndash; Flaschenwasser kaufen</span></div>
         </div>
       </div>
 
       <div class="info-card">
-        <div class="info-card-header"><span class="ico">🗣️</span> Italienisch – Wichtige Phrasen</div>
+        <div class="info-card-hdr">&#x1F5E3;&#xFE0F; Italienisch &ndash; Wichtige Phrasen</div>
         <div class="info-card-body">
-          <div class="phrase-row"><span class="phrase-de">Guten Morgen</span><span class="phrase-it">Buongiorno</span></div>
-          <div class="phrase-row"><span class="phrase-de">Bitte</span><span class="phrase-it">Per favore</span></div>
-          <div class="phrase-row"><span class="phrase-de">Danke</span><span class="phrase-it">Grazie</span></div>
-          <div class="phrase-row"><span class="phrase-de">Entschuldigung</span><span class="phrase-it">Mi scusi</span></div>
-          <div class="phrase-row"><span class="phrase-de">Wo ist...?</span><span class="phrase-it">Dov'è...?</span></div>
-          <div class="phrase-row"><span class="phrase-de">Wie viel kostet das?</span><span class="phrase-it">Quanto costa?</span></div>
-          <div class="phrase-row"><span class="phrase-de">Die Rechnung bitte</span><span class="phrase-it">Il conto, per favore</span></div>
-          <div class="phrase-row"><span class="phrase-de">Ich verstehe nicht</span><span class="phrase-it">Non capisco</span></div>
-          <div class="phrase-row"><span class="phrase-de">Hilfe!</span><span class="phrase-it">Aiuto!</span></div>
-          <div class="phrase-row"><span class="phrase-de">Arzt / Krankenhaus</span><span class="phrase-it">Medico / Ospedale</span></div>
+          <div class="phrase-row"><span class="ph-de">Guten Morgen</span><span class="ph-it">Buongiorno</span></div>
+          <div class="phrase-row"><span class="ph-de">Guten Abend</span><span class="ph-it">Buonasera</span></div>
+          <div class="phrase-row"><span class="ph-de">Bitte</span><span class="ph-it">Per favore</span></div>
+          <div class="phrase-row"><span class="ph-de">Danke</span><span class="ph-it">Grazie</span></div>
+          <div class="phrase-row"><span class="ph-de">Entschuldigung</span><span class="ph-it">Mi scusi</span></div>
+          <div class="phrase-row"><span class="ph-de">Wo ist &hellip;?</span><span class="ph-it">Dov&rsquo;&egrave; &hellip;?</span></div>
+          <div class="phrase-row"><span class="ph-de">Wie viel kostet das?</span><span class="ph-it">Quanto costa?</span></div>
+          <div class="phrase-row"><span class="ph-de">Die Rechnung bitte</span><span class="ph-it">Il conto, per favore</span></div>
+          <div class="phrase-row"><span class="ph-de">Ich verstehe nicht</span><span class="ph-it">Non capisco</span></div>
+          <div class="phrase-row"><span class="ph-de">Hilfe!</span><span class="ph-it">Aiuto!</span></div>
+          <div class="phrase-row"><span class="ph-de">Arzt / Krankenhaus</span><span class="ph-it">Medico / Ospedale</span></div>
         </div>
       </div>
 
       <div class="info-card">
-        <div class="info-card-header"><span class="ico">🍋</span> Sizilianische Spezialitäten</div>
+        <div class="info-card-hdr">&#x1F34B; Sizilianische Spezialit&auml;ten</div>
         <div class="info-card-body">
-          <div class="info-row"><span class="ir-label">Granita</span><span class="ir-value">Halbgefrorenes Wassereis – Frühstück mit Brioche</span></div>
-          <div class="info-row"><span class="ir-label">Arancini</span><span class="ir-value">Gefüllte Reisbällchen – typischer Snack</span></div>
-          <div class="info-row"><span class="ir-label">Caponata</span><span class="ir-value">Süß-saures Auberginengemüse</span></div>
-          <div class="info-row"><span class="ir-label">Cannoli</span><span class="ir-value">Knusprige Teigrolle mit Ricotta-Füllung</span></div>
-          <div class="info-row"><span class="ir-label">Vino locale</span><span class="ir-value">Nero d'Avola – kräftiger sizilianischer Rotwein</span></div>
+          <div class="info-row"><span class="ir-lbl">Granita</span><span class="ir-val">Halbgefrorenes Wassereis &ndash; Fr&uuml;hst&uuml;ck mit Brioche</span></div>
+          <div class="info-row"><span class="ir-lbl">Arancini</span><span class="ir-val">Gef&uuml;llte Reisb&auml;llchen &ndash; typischer Snack</span></div>
+          <div class="info-row"><span class="ir-lbl">Caponata</span><span class="ir-val">S&uuml;&szlig;-saures Auberginengem&uuml;se</span></div>
+          <div class="info-row"><span class="ir-lbl">Cannoli</span><span class="ir-val">Knusprige Teigrolle mit Ricotta-F&uuml;llung</span></div>
+          <div class="info-row"><span class="ir-lbl">Nero d&rsquo;Avola</span><span class="ir-val">Kr&auml;ftiger sizilianischer Rotwein</span></div>
         </div>
       </div>
     </section>
@@ -1205,70 +1196,69 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ============================================================
 // DATA FETCH
 // ============================================================
-
 // ============================================================
-// WETTER – Open-Meteo API (kostenlos, kein Key nötig)
-// Koordinaten: Catania, Sizilien (Reisedestination)
+// WETTER – Open-Meteo (kostenlos, kein API-Key)
+// Koordinaten: Catania, Sizilien
 // ============================================================
-const WEATHER_LAT = 37.50;
-const WEATHER_LON = 15.09;
-const WEATHER_CITY = 'Catania, Sizilien';
-
-const WMO_ICONS = {
-  0:'☀️',1:'🌤️',2:'⛅',3:'☁️',
-  45:'🌫️',48:'🌫️',
-  51:'🌦️',53:'🌦️',55:'🌧️',
-  61:'🌧️',63:'🌧️',65:'🌧️',
-  71:'🌨️',73:'🌨️',75:'🌨️',
-  80:'🌦️',81:'🌧️',82:'⛈️',
-  95:'⛈️',96:'⛈️',99:'⛈️'
+var WICONS = {
+  0:'&#9728;&#65039;',1:'&#127780;&#65039;',2:'&#9925;',3:'&#9729;',
+  45:'&#127787;&#65039;',48:'&#127787;&#65039;',
+  51:'&#127746;',53:'&#127746;',55:'&#127783;',
+  61:'&#127783;',63:'&#127783;',65:'&#127783;',
+  71:'&#127784;&#65039;',73:'&#127784;&#65039;',75:'&#127784;&#65039;',
+  80:'&#127746;',81:'&#127783;',82:'&#9928;&#65039;',
+  95:'&#9928;&#65039;',96:'&#9928;&#65039;',99:'&#9928;&#65039;'
 };
-const WMO_DESC = {
-  0:'Klarer Himmel',1:'Überwiegend klar',2:'Teilweise bewölkt',3:'Bedeckt',
+var WDESC = {
+  0:'Klarer Himmel',1:'Ueberwiegend klar',2:'Teilweise bewoelkt',3:'Bedeckt',
   45:'Neblig',48:'Gefrierender Nebel',
-  51:'Leichter Nieselregen',53:'Nieselregen',55:'Starker Nieselregen',
+  51:'Nieselregen',53:'Nieselregen',55:'Starker Nieselregen',
   61:'Leichter Regen',63:'Regen',65:'Starker Regen',
-  71:'Leichter Schneefall',73:'Schneefall',75:'Starker Schneefall',
+  71:'Leichter Schnee',73:'Schnee',75:'Starker Schnee',
   80:'Regenschauer',81:'Regenschauer',82:'Starke Schauer',
-  95:'Gewitter',96:'Gewitter mit Hagel',99:'Starkes Gewitter'
+  95:'Gewitter',96:'Gewitter',99:'Gewitter'
 };
 
 async function loadWeather() {
-  const w = document.getElementById('weather-widget');
+  var w = el('weather-widget');
   if (!w) return;
-  w.innerHTML = '<p id="weather-loading">🌍 Wetter wird geladen…</p>';
+  w.innerHTML = '<p style="color:var(--text-soft);font-size:.8rem;padding:8px 0">&#127757; Wetter wird geladen&hellip;</p>';
   try {
-    const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + WEATHER_LAT +
-      '&longitude=' + WEATHER_LON +
-      '&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m' +
-      '&wind_speed_unit=kmh&timezone=Europe/Rome';
-    const res  = await fetch(url);
-    const json = await res.json();
-    const c    = json.current;
-    const code = c.weather_code;
-    const icon = WMO_ICONS[code] || '🌡️';
-    const desc = WMO_DESC[code]  || 'Unbekannt';
-    w.innerHTML = `
-      <div class="weather-card">
-        <div class="weather-icon">\${icon}</div>
-        <div class="weather-info">
-          <div class="weather-temp">\${Math.round(c.temperature_2m)}°C</div>
-          <div class="weather-desc">\${desc}</div>
-          <div class="weather-details">Gefühlt \${Math.round(c.apparent_temperature)}°C · Wind \${Math.round(c.wind_speed_10m)} km/h · Luft \${c.relative_humidity_2m}%</div>
-          <div class="weather-location">📍 \${WEATHER_CITY}</div>
-        </div>
-      </div>\`;
-    DB.log('Wetter geladen: ' + Math.round(c.temperature_2m) + '°C ' + desc, 'ok');
-  } catch(e) {
+    var url = 'https://api.open-meteo.com/v1/forecast'
+      + '?latitude=37.50&longitude=15.09'
+      + '&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m'
+      + '&wind_speed_unit=kmh&timezone=Europe%2FRome';
+    var res  = await fetch(url);
+    var json = await res.json();
+    var cur  = json.current;
+    var code = cur.weather_code;
+    var icon = WICONS[code] || '&#127777;&#65039;';
+    var desc = WDESC[code]  || 'Unbekannt';
+    var temp = Math.round(cur.temperature_2m);
+    var feel = Math.round(cur.apparent_temperature);
+    var wind = Math.round(cur.wind_speed_10m);
+    var humi = cur.relative_humidity_2m;
+    w.innerHTML = '<div class="weather-card">'
+      + '<div class="weather-icon">' + icon + '</div>'
+      + '<div>'
+      + '<div class="weather-temp">' + temp + '&deg;C</div>'
+      + '<div class="weather-desc">' + desc + '</div>'
+      + '<div class="weather-meta">Gef&uuml;hlt ' + feel + '&deg;C'
+      + ' &middot; Wind ' + wind + ' km/h'
+      + ' &middot; Luft ' + humi + '%</div>'
+      + '<div class="weather-city">&#128205; Catania, Sizilien</div>'
+      + '</div></div>';
+    DB.log('Wetter: ' + temp + 'C, ' + desc, 'ok');
+  } catch (e) {
     w.innerHTML = '';
     DB.log('Wetter Fehler: ' + e.message, 'warn');
   }
 }
 
 async function bootData() {
+  loadWeather();
   DB.log('App gestartet – Host: ' + location.hostname, 'info');
   DB.log('Online: ' + navigator.onLine, navigator.onLine ? 'ok' : 'warn');
-  loadWeather();
   DB.log('Config URL: ' + SUPABASE_URL.slice(0,50), 'info');
   DB.log('Config Key: ' + SUPABASE_ANON.slice(0,25) + '... (len=' + SUPABASE_ANON.length + ')', 'info');
   DB.log('Build: __BUILD_TIME__', 'info');
@@ -1339,10 +1329,6 @@ window.addEventListener('offline', () => toast('Offline', 'warn'));
 // ============================================================
 // RENDER – PUBLIC
 // ============================================================
-function mapsQ(name) {
-  return encodeURIComponent(name + ', Sizilien, Italien');
-}
-
 function render() {
   renderHeader();
   renderDashboard();
@@ -1389,67 +1375,107 @@ function renderDashboard() {
 
 function renderSchedule() {
   const c = el('schedule-container');
-  if (!data.days.length) { c.innerHTML = '<p style="color:var(--text-soft);font-size:.82rem">Keine Daten.</p>'; return; }
-  c.innerHTML = data.days.map(day => `
-    <div class="day-header">
-      <span class="day-badge">Tag ${day.day_number}</span>
-      <span class="day-date-label">${fmtDate(day.date)} · ${x(day.label||'')}</span>
-    </div>
-    ${(day.schedule_items||[]).map(item => {
-        const mq = encodeURIComponent(item.place + ', Sizilien, Italien');
-        return `
-      <div class="schedule-item">
-        <div class="si-time">${x(item.time||'')}</div>
-        <div style="flex:1;min-width:0">
-          <div class="si-place">${x(item.place)}</div>
-          <div class="si-desc">${x(item.description||'')}</div>
-          <a href="https://www.google.com/maps/search/?api=1&query=${mq}" target="_blank" rel="noopener" class="si-maps-link">📍 In Maps öffnen</a>
-        </div>
-      </div>`;
-      }).join('')}
-  `).join('');
+  if (!data.days.length) {
+    c.innerHTML = '<p style="color:var(--text-soft);font-size:.82rem">Keine Daten.</p>';
+    return;
+  }
+  let h = '';
+  for (const day of data.days) {
+    h += '<div class="day-header">'
+       + '<span class="day-badge">Tag ' + day.day_number + '</span>'
+       + '<span class="day-date-label">' + fmtDate(day.date) + ' &middot; ' + x(day.label||'') + '</span>'
+       + '</div>';
+    for (const item of (day.schedule_items || [])) {
+      const mq = encodeURIComponent(item.place + ', Sizilien, Italien');
+      const mapsHref = 'https://www.google.com/maps/search/?api=1&query=' + mq;
+      h += '<div class="schedule-item">'
+         + '<div class="si-time">' + x(item.time||'') + '</div>'
+         + '<div style="flex:1;min-width:0">'
+         + '<div class="si-place">' + x(item.place) + '</div>'
+         + '<div class="si-desc">' + x(item.description||'') + '</div>'
+         + '<a href="' + mapsHref + '" target="_blank" rel="noopener" class="maps-link">'
+         + '&#128205; In Maps &#246;ffnen</a>'
+         + '</div></div>';
+    }
+  }
+  c.innerHTML = h;
 }
 
 function renderDestinations() {
   const c = el('destinations-container');
-  if (!data.destinations.length) { c.innerHTML = '<p style="color:var(--text-soft);font-size:.82rem">Keine Daten.</p>'; return; }
-  c.innerHTML = data.destinations.map(d => `
-    <div class="dest-card">
-      <div class="dest-card-header" onclick="toggleDest('${d.id}')">
-        <div>
-          <h3>${x(d.name)}</h3>
-          <small>${x(d.location||'')} · <a href="https://www.google.com/maps/search/?api=1&query=${mapsQ(d.name)}" target="_blank" rel="noopener" style="color:rgba(255,255,255,.7);text-decoration:none;">📍 Maps</a></small>
-        </div>
-        <svg class="dest-chevron" id="chev-${d.id}" viewBox="0 0 24 24" width="20" height="20"
-             stroke="white" fill="none" stroke-width="2" stroke-linecap="round">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </div>
-      <div class="dest-body" id="dbody-${d.id}">
-        ${d.history ? `<div class="dest-section"><div class="dest-section-title">Geschichte</div><p>${x(d.history)}</p></div><div class="divider"></div>` : ''}
-        ${(d.destination_facts||[]).length ? `<div class="dest-section"><div class="dest-section-title">Fakten</div><ul class="facts-list">${(d.destination_facts||[]).map(f=>`<li>${x(f.fact)}</li>`).join('')}</ul></div><div class="divider"></div>` : ''}
-        ${d.hints ? `<div class="dest-section"><div class="dest-section-title">Hinweise</div><p>${x(d.hints)}</p></div>` : ''}
-      </div>
-    </div>`).join('');
+  if (!data.destinations.length) {
+    c.innerHTML = '<p style="color:var(--text-soft);font-size:.82rem">Keine Daten.</p>';
+    return;
+  }
+  let h = '';
+  for (const d of data.destinations) {
+    const mq       = encodeURIComponent(d.name + ', Sizilien, Italien');
+    const mapsHref = 'https://www.google.com/maps/search/?api=1&query=' + mq;
+    h += '<div class="dest-card">'
+       + '<div class="dest-card-header" onclick="toggleDest(&#39;' + d.id + '&#39;)">'
+       + '<div>'
+       + '<h3>' + x(d.name) + '</h3>'
+       + '<small>' + x(d.location||'')
+       + ' &middot; <a href="' + mapsHref + '" target="_blank" rel="noopener"'
+       + ' style="color:rgba(255,255,255,.7);text-decoration:none;">&#128205; Maps</a>'
+       + '</small></div>'
+       + '<svg class="dest-chevron" id="chev-' + d.id + '" viewBox="0 0 24 24"'
+       + ' width="20" height="20" stroke="white" fill="none"'
+       + ' stroke-width="2" stroke-linecap="round">'
+       + '<polyline points="6 9 12 15 18 9"/></svg>'
+       + '</div>'
+       + '<div class="dest-body" id="dbody-' + d.id + '">';
+    if (d.history) {
+      h += '<div class="dest-section">'
+         + '<div class="dest-section-title">Geschichte</div>'
+         + '<p>' + x(d.history) + '</p>'
+         + '</div><div class="divider"></div>';
+    }
+    if ((d.destination_facts||[]).length) {
+      h += '<div class="dest-section">'
+         + '<div class="dest-section-title">Fakten</div>'
+         + '<ul class="facts-list">';
+      for (const f of d.destination_facts) {
+        h += '<li>' + x(f.fact) + '</li>';
+      }
+      h += '</ul></div><div class="divider"></div>';
+    }
+    if (d.hints) {
+      h += '<div class="dest-section">'
+         + '<div class="dest-section-title">Hinweise</div>'
+         + '<p>' + x(d.hints) + '</p>'
+         + '</div>';
+    }
+    h += '</div></div>';
+  }
+  c.innerHTML = h;
 }
 
 function renderContacts() {
   const c = el('contacts-container');
-  if (!data.contacts.length) { c.innerHTML = '<p style="color:var(--text-soft);font-size:.82rem">Keine Daten.</p>'; return; }
-  c.innerHTML = data.contacts.map(ct => {
+  if (!data.contacts.length) {
+    c.innerHTML = '<p style="color:var(--text-soft);font-size:.82rem">Keine Daten.</p>';
+    return;
+  }
+  let h = '';
+  for (const ct of data.contacts) {
     const ini = ct.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
-    return `<div class="contact-card">
-      <div class="contact-avatar">${ini}</div>
-      <div style="flex:1;min-width:0">
-        <div class="contact-role">${x(ct.role)}</div>
-        <div class="contact-name">${x(ct.name)}</div>
-        <div class="contact-links">
-          ${ct.phone ? `<a href="tel:${ct.phone.replace(/\s/g,'')}" class="contact-link">📞 ${x(ct.phone)}</a>` : ''}
-          ${ct.email ? `<a href="mailto:${ct.email}" class="contact-link">✉️ ${x(ct.email)}</a>`  : ''}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+    h += '<div class="contact-card">'
+       + '<div class="contact-avatar">' + ini + '</div>'
+       + '<div style="flex:1;min-width:0">'
+       + '<div class="contact-role">' + x(ct.role) + '</div>'
+       + '<div class="contact-name">' + x(ct.name) + '</div>'
+       + '<div class="contact-links">';
+    if (ct.phone) {
+      const tel = ct.phone.replace(/\s/g, '');
+      h += '<a href="tel:' + tel + '" class="contact-link">&#128222; ' + x(ct.phone) + '</a>';
+    }
+    if (ct.email) {
+      h += '<a href="mailto:' + ct.email + '" class="contact-link">&#9993;&#65039; ' + x(ct.email) + '</a>';
+    }
+    h += '</div></div></div>';
+  }
+  c.innerHTML = h;
 }
 
 // ============================================================

@@ -1371,9 +1371,20 @@ async function fetchAll() {
   }
 }
 
+function timeToMin(t) {
+  // Wandelt "HH:MM" in Minuten um; leere/ungültige Zeiten ans Ende (9999)
+  if (!t || !t.match(/^\d{1,2}:\d{2}$/)) return 9999;
+  var p = t.split(':');
+  return parseInt(p[0]) * 60 + parseInt(p[1]);
+}
+
 function sortDays(days) {
-  return days.sort((a,b) => a.sort_order - b.sort_order).map(d => ({
-    ...d, schedule_items: (d.schedule_items||[]).sort((a,b) => a.sort_order - b.sort_order)
+  return days.sort((a,b) => {
+    // Primär nach Datum, sekundär nach sort_order/day_number
+    if (a.date && b.date) return a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
+    return a.sort_order - b.sort_order;
+  }).map(d => ({
+    ...d, schedule_items: (d.schedule_items||[]).sort((a,b) => timeToMin(a.time) - timeToMin(b.time))
   }));
 }
 function sortDests(dests) {
@@ -1597,7 +1608,7 @@ function renderAdminDays() {
       </div>
       <div class="admin-card-body">
         <div class="items-list">
-          ${(day.schedule_items||[]).map(item => `
+          ${(day.schedule_items||[]).slice().sort((a,b) => { var ta=a.time||'',tb=b.time||''; return ta<tb?-1:ta>tb?1:0; }).map(item => `
             <div class="item-row">
               <span class="i-time">${x(item.time||'')}</span>
               <span class="i-place">${x(item.place)}</span>
@@ -1729,7 +1740,8 @@ function _openItemModal(dayId, itemId) {
   `, async () => {
     const place = gv('m-iplace');
     if (!place) { toast('Ort/Titel erforderlich', 'error'); return false; }
-    const fields = { time: gv('m-itime')||null, place, description: gv('m-idesc'), sort_order: (day?.schedule_items?.length||0)+1 };
+    const itemTime = gv('m-itime') || null;
+    const fields = { time: itemTime, place, description: gv('m-idesc'), sort_order: timeToMin(itemTime) };
     const { error } = itemId
       ? await sbq(c => c.from('schedule_items').update(fields).eq('id', itemId))
       : await sbq(c => c.from('schedule_items').insert({ ...fields, day_id: dayId }));

@@ -508,6 +508,69 @@ html, body {
 #log-entry-count { font-size: .68rem; color: #8b949e; font-family: monospace; }
 
 
+
+/* ============================================================
+   WETTER WIDGET
+============================================================ */
+.weather-card {
+  background: linear-gradient(135deg, #1a6b9a 0%, #2a9d8f 100%);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px;
+  color: #fff; display: flex; align-items: center; gap: 14px;
+  box-shadow: var(--shadow-lg);
+}
+.weather-icon { font-size: 2.4rem; flex-shrink: 0; }
+.weather-info { flex: 1; }
+.weather-temp { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+.weather-desc { font-size: .8rem; color: rgba(255,255,255,.85); margin-top: 2px; }
+.weather-details { font-size: .74rem; color: rgba(255,255,255,.75); margin-top: 4px; }
+.weather-location { font-size: .7rem; color: rgba(255,255,255,.6); margin-top: 1px; }
+#weather-loading { font-size: .8rem; color: var(--text-soft); padding: 10px 0; }
+
+/* ============================================================
+   MAPS LINKS IN SCHEDULE
+============================================================ */
+.si-maps-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .7rem; font-weight: 600; color: var(--blue);
+  text-decoration: none; background: var(--surface2);
+  padding: 3px 8px; border-radius: 20px; margin-top: 5px;
+  transition: background .15s;
+}
+.si-maps-link:active { background: var(--border); }
+
+/* ============================================================
+   INFO SEITE
+============================================================ */
+.info-section { margin-bottom: 14px; }
+.info-card {
+  background: var(--surface); border-radius: var(--radius);
+  box-shadow: var(--shadow); border: 1px solid rgba(212,221,232,.45);
+  overflow: hidden; margin-bottom: 10px;
+}
+.info-card-header {
+  background: var(--navy); color: #fff;
+  padding: 11px 15px; font-family: 'Playfair Display', serif;
+  font-size: .95rem; font-weight: 600; display: flex;
+  align-items: center; gap: 9px;
+}
+.info-card-header .ico { font-size: 1.1rem; }
+.info-card-body { padding: 12px 15px; }
+.info-row {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+  font-size: .83rem;
+}
+.info-row:last-child { border-bottom: none; }
+.info-row .ir-label { color: var(--text-soft); min-width: 100px; flex-shrink: 0; font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .4px; padding-top: 1px; }
+.info-row .ir-value { color: var(--text); flex: 1; line-height: 1.4; }
+.info-row a { color: var(--blue); text-decoration: none; }
+.phrase-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0; border-bottom: 1px solid var(--border); font-size: .82rem;
+}
+.phrase-row:last-child { border-bottom: none; }
+.phrase-de { color: var(--text-soft); }
+.phrase-it { color: var(--navy); font-weight: 600; font-style: italic; }
 </style>
 </head>
 <body>
@@ -534,6 +597,9 @@ html, body {
         <p  id="dash-sub">5 Tage · Nordrhein-Westfalen</p>
         <span class="badge" id="dash-dates">Mai 2026</span>
       </div>
+      <!-- Wetter-Widget -->
+      <div id="weather-widget"></div>
+
       <div class="next-event-card">
         <div class="ne-label">Nächster Programmpunkt</div>
         <div class="ne-title" id="next-title">Wird geladen…</div>
@@ -551,6 +617,9 @@ html, body {
         </div>
         <div class="quick-card" onclick="showView('notes')">
           <div class="qc-icon">📝</div><div class="qc-label">Notizen</div>
+        </div>
+        <div class="quick-card" onclick="showView('info')">
+          <div class="qc-icon">ℹ️</div><div class="qc-label">Reiseinfos</div>
         </div>
       </div>
       <div class="info-banner">
@@ -589,6 +658,67 @@ html, body {
         Als Textdatei exportieren
       </button>
       <div class="info-banner">🔒 Notizen bleiben lokal auf diesem Gerät gespeichert.</div>
+    </section>
+
+    <!-- ===== PUBLIC: REISEINFOS ===== -->
+    <section id="view-info" class="view">
+      <div class="section-title">Reiseinfos</div>
+
+      <div class="info-card">
+        <div class="info-card-header"><span class="ico">✈️</span> Flugdaten</div>
+        <div class="info-card-body">
+          <div class="info-row"><span class="ir-label">Hinflug</span><span class="ir-value">EW 9814 · Düsseldorf → Catania<br>07:20 Uhr ab · 10:00 Uhr an</span></div>
+          <div class="info-row"><span class="ir-label">Rückflug</span><span class="ir-value">EW 9815 · Catania → Düsseldorf<br>13:55 Uhr ab · 16:40 Uhr an</span></div>
+          <div class="info-row"><span class="ir-label">Airline</span><span class="ir-value">Eurowings</span></div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-header"><span class="ico">🏨</span> Hotels</div>
+        <div class="info-card-body">
+          <div class="info-row"><span class="ir-label">Caltagirone</span><span class="ir-value">Hotel Luigi Sturzo ***<br>Via Mons. F. Fasola, 39 – 95041 Caltagirone CT<br><a href="tel:+39093327196">+39 0933 27196</a></span></div>
+          <div class="info-row"><span class="ir-label">Siracusa</span><span class="ir-value">Hotel Parco delle Fontane ****<br>Viale Scala Greca, 325 – 96100 Siracusa SR</span></div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-header"><span class="ico">🇮🇹</span> Praktisches</div>
+        <div class="info-card-body">
+          <div class="info-row"><span class="ir-label">Zeitzone</span><span class="ir-value">CEST – gleiche Zeit wie Deutschland</span></div>
+          <div class="info-row"><span class="ir-label">Währung</span><span class="ir-value">Euro (€) – Karte wird überall akzeptiert</span></div>
+          <div class="info-row"><span class="ir-label">Steckdosen</span><span class="ir-value">Typ F / Typ L – Adapter empfohlen</span></div>
+          <div class="info-row"><span class="ir-label">Notruf</span><span class="ir-value"><a href="tel:112">112</a> (EU-Notruf) · <a href="tel:118">118</a> (Krankenwagen IT)</span></div>
+          <div class="info-row"><span class="ir-label">Wetter Mai</span><span class="ir-value">22–28 °C · trocken · viel Sonne</span></div>
+          <div class="info-row"><span class="ir-label">Trinkwasser</span><span class="ir-value">Leitungswasser in Sizilien nicht trinken – Flaschenwasser kaufen</span></div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-header"><span class="ico">🗣️</span> Italienisch – Wichtige Phrasen</div>
+        <div class="info-card-body">
+          <div class="phrase-row"><span class="phrase-de">Guten Morgen</span><span class="phrase-it">Buongiorno</span></div>
+          <div class="phrase-row"><span class="phrase-de">Bitte</span><span class="phrase-it">Per favore</span></div>
+          <div class="phrase-row"><span class="phrase-de">Danke</span><span class="phrase-it">Grazie</span></div>
+          <div class="phrase-row"><span class="phrase-de">Entschuldigung</span><span class="phrase-it">Mi scusi</span></div>
+          <div class="phrase-row"><span class="phrase-de">Wo ist...?</span><span class="phrase-it">Dov'è...?</span></div>
+          <div class="phrase-row"><span class="phrase-de">Wie viel kostet das?</span><span class="phrase-it">Quanto costa?</span></div>
+          <div class="phrase-row"><span class="phrase-de">Die Rechnung bitte</span><span class="phrase-it">Il conto, per favore</span></div>
+          <div class="phrase-row"><span class="phrase-de">Ich verstehe nicht</span><span class="phrase-it">Non capisco</span></div>
+          <div class="phrase-row"><span class="phrase-de">Hilfe!</span><span class="phrase-it">Aiuto!</span></div>
+          <div class="phrase-row"><span class="phrase-de">Arzt / Krankenhaus</span><span class="phrase-it">Medico / Ospedale</span></div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-header"><span class="ico">🍋</span> Sizilianische Spezialitäten</div>
+        <div class="info-card-body">
+          <div class="info-row"><span class="ir-label">Granita</span><span class="ir-value">Halbgefrorenes Wassereis – Frühstück mit Brioche</span></div>
+          <div class="info-row"><span class="ir-label">Arancini</span><span class="ir-value">Gefüllte Reisbällchen – typischer Snack</span></div>
+          <div class="info-row"><span class="ir-label">Caponata</span><span class="ir-value">Süß-saures Auberginengemüse</span></div>
+          <div class="info-row"><span class="ir-label">Cannoli</span><span class="ir-value">Knusprige Teigrolle mit Ricotta-Füllung</span></div>
+          <div class="info-row"><span class="ir-label">Vino locale</span><span class="ir-value">Nero d'Avola – kräftiger sizilianischer Rotwein</span></div>
+        </div>
+      </div>
     </section>
 
     <!-- ===== ADMIN ===== -->
@@ -725,6 +855,10 @@ html, body {
     <button class="tab-btn" id="tab-admin" data-view="admin" onclick="showView('admin')">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 2-8 4v1h16v-1c0-2-2-4-8-4z"/><path d="M18 3l1.5 1.5L18 6l-1.5-1.5z" stroke-width="1.2"/></svg>
       Admin
+    </button>
+    <button class="tab-btn" data-view="info" onclick="showView('info')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Info
     </button>
     <button class="tab-btn" id="tab-log" onclick="logDlgOpen()">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/></svg>
@@ -1071,9 +1205,70 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ============================================================
 // DATA FETCH
 // ============================================================
+
+// ============================================================
+// WETTER – Open-Meteo API (kostenlos, kein Key nötig)
+// Koordinaten: Catania, Sizilien (Reisedestination)
+// ============================================================
+const WEATHER_LAT = 37.50;
+const WEATHER_LON = 15.09;
+const WEATHER_CITY = 'Catania, Sizilien';
+
+const WMO_ICONS = {
+  0:'☀️',1:'🌤️',2:'⛅',3:'☁️',
+  45:'🌫️',48:'🌫️',
+  51:'🌦️',53:'🌦️',55:'🌧️',
+  61:'🌧️',63:'🌧️',65:'🌧️',
+  71:'🌨️',73:'🌨️',75:'🌨️',
+  80:'🌦️',81:'🌧️',82:'⛈️',
+  95:'⛈️',96:'⛈️',99:'⛈️'
+};
+const WMO_DESC = {
+  0:'Klarer Himmel',1:'Überwiegend klar',2:'Teilweise bewölkt',3:'Bedeckt',
+  45:'Neblig',48:'Gefrierender Nebel',
+  51:'Leichter Nieselregen',53:'Nieselregen',55:'Starker Nieselregen',
+  61:'Leichter Regen',63:'Regen',65:'Starker Regen',
+  71:'Leichter Schneefall',73:'Schneefall',75:'Starker Schneefall',
+  80:'Regenschauer',81:'Regenschauer',82:'Starke Schauer',
+  95:'Gewitter',96:'Gewitter mit Hagel',99:'Starkes Gewitter'
+};
+
+async function loadWeather() {
+  const w = document.getElementById('weather-widget');
+  if (!w) return;
+  w.innerHTML = '<p id="weather-loading">🌍 Wetter wird geladen…</p>';
+  try {
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + WEATHER_LAT +
+      '&longitude=' + WEATHER_LON +
+      '&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m' +
+      '&wind_speed_unit=kmh&timezone=Europe/Rome';
+    const res  = await fetch(url);
+    const json = await res.json();
+    const c    = json.current;
+    const code = c.weather_code;
+    const icon = WMO_ICONS[code] || '🌡️';
+    const desc = WMO_DESC[code]  || 'Unbekannt';
+    w.innerHTML = `
+      <div class="weather-card">
+        <div class="weather-icon">\${icon}</div>
+        <div class="weather-info">
+          <div class="weather-temp">\${Math.round(c.temperature_2m)}°C</div>
+          <div class="weather-desc">\${desc}</div>
+          <div class="weather-details">Gefühlt \${Math.round(c.apparent_temperature)}°C · Wind \${Math.round(c.wind_speed_10m)} km/h · Luft \${c.relative_humidity_2m}%</div>
+          <div class="weather-location">📍 \${WEATHER_CITY}</div>
+        </div>
+      </div>\`;
+    DB.log('Wetter geladen: ' + Math.round(c.temperature_2m) + '°C ' + desc, 'ok');
+  } catch(e) {
+    w.innerHTML = '';
+    DB.log('Wetter Fehler: ' + e.message, 'warn');
+  }
+}
+
 async function bootData() {
   DB.log('App gestartet – Host: ' + location.hostname, 'info');
   DB.log('Online: ' + navigator.onLine, navigator.onLine ? 'ok' : 'warn');
+  loadWeather();
   DB.log('Config URL: ' + SUPABASE_URL.slice(0,50), 'info');
   DB.log('Config Key: ' + SUPABASE_ANON.slice(0,25) + '... (len=' + SUPABASE_ANON.length + ')', 'info');
   DB.log('Build: __BUILD_TIME__', 'info');
@@ -1144,6 +1339,10 @@ window.addEventListener('offline', () => toast('Offline', 'warn'));
 // ============================================================
 // RENDER – PUBLIC
 // ============================================================
+function mapsQ(name) {
+  return encodeURIComponent(name + ', Sizilien, Italien');
+}
+
 function render() {
   renderHeader();
   renderDashboard();
@@ -1196,14 +1395,18 @@ function renderSchedule() {
       <span class="day-badge">Tag ${day.day_number}</span>
       <span class="day-date-label">${fmtDate(day.date)} · ${x(day.label||'')}</span>
     </div>
-    ${(day.schedule_items||[]).map(item => `
+    ${(day.schedule_items||[]).map(item => {
+        const mq = encodeURIComponent(item.place + ', Sizilien, Italien');
+        return `
       <div class="schedule-item">
         <div class="si-time">${x(item.time||'')}</div>
-        <div>
+        <div style="flex:1;min-width:0">
           <div class="si-place">${x(item.place)}</div>
           <div class="si-desc">${x(item.description||'')}</div>
+          <a href="https://www.google.com/maps/search/?api=1&query=${mq}" target="_blank" rel="noopener" class="si-maps-link">📍 In Maps öffnen</a>
         </div>
-      </div>`).join('')}
+      </div>`;
+      }).join('')}
   `).join('');
 }
 
@@ -1215,7 +1418,7 @@ function renderDestinations() {
       <div class="dest-card-header" onclick="toggleDest('${d.id}')">
         <div>
           <h3>${x(d.name)}</h3>
-          <small>${x(d.location||'')}</small>
+          <small>${x(d.location||'')} · <a href="https://www.google.com/maps/search/?api=1&query=${mapsQ(d.name)}" target="_blank" rel="noopener" style="color:rgba(255,255,255,.7);text-decoration:none;">📍 Maps</a></small>
         </div>
         <svg class="dest-chevron" id="chev-${d.id}" viewBox="0 0 24 24" width="20" height="20"
              stroke="white" fill="none" stroke-width="2" stroke-linecap="round">

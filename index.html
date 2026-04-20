@@ -150,6 +150,8 @@ html, body {
 .tab-btn.active svg { transform: translateY(-1px); stroke-width: 2.2; }
 #tab-admin { display: flex; }
 #tab-admin.visible { display: flex; }
+#tab-log { display: none; }
+#tab-log.visible  { display: flex; }
 
 /* ============================================================
    VIEWS
@@ -618,6 +620,54 @@ html, body {
 .highlight-pulse {
   animation: highlightPulse 1.8s ease forwards;
 }
+
+/* ── HEUTE-MARKIERUNG ── */
+.day-block-today .day-header {
+  margin-top: 8px;
+}
+.day-badge-today {
+  background: var(--blue) !important;
+  box-shadow: 0 2px 8px rgba(37,99,235,.35);
+}
+.day-today-label {
+  font-size: .65rem; font-weight: 600; color: var(--blue);
+  background: var(--blue-soft); border: 1px solid #bfdbfe;
+  padding: 2px 7px; border-radius: 5px; letter-spacing: .5px;
+  text-transform: uppercase;
+}
+.schedule-item-today {
+  border-color: #bfdbfe !important;
+  background: #f8fbff !important;
+  box-shadow: 0 0 0 1px #bfdbfe !important;
+}
+.si-time-today {
+  color: var(--blue) !important;
+  font-weight: 700 !important;
+}
+
+/* ── SKELETON LOADER ── */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface2) 25%, #e8edf5 50%, var(--surface2) 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 8px;
+}
+.skeleton-card {
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px; margin-bottom: 8px; overflow: hidden;
+}
+.skeleton-line {
+  height: 13px; margin-bottom: 8px; border-radius: 4px;
+}
+.skeleton-line.w-40 { width: 40%; }
+.skeleton-line.w-65 { width: 65%; }
+.skeleton-line.w-85 { width: 85%; }
+.skeleton-line.w-50 { width: 50%; }
+.skeleton-line.sm   { height: 10px; margin-bottom: 6px; }
 </style>
 </head>
 <body>
@@ -680,19 +730,19 @@ html, body {
     <!-- ===== PUBLIC: REISEPLAN ===== -->
     <section id="view-schedule" class="view">
       <div class="section-title">Reiseplan</div>
-      <div id="schedule-container"><p style="color:var(--text-soft);font-size:.82rem">Wird geladen…</p></div>
+      <div id="schedule-container"><div style="margin:16px 0 9px;display:flex;gap:9px;align-items:center"><div class="skeleton skeleton-line" style="width:70px;height:24px;border-radius:6px"></div><div class="skeleton skeleton-line w-50" style="margin:0"></div></div><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-65 sm"></div></div><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-85 sm"></div></div><div style="margin:16px 0 9px;display:flex;gap:9px;align-items:center"><div class="skeleton skeleton-line" style="width:70px;height:24px;border-radius:6px"></div><div class="skeleton skeleton-line w-50" style="margin:0"></div></div><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-65 sm"></div></div><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-85 sm"></div></div><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-40 sm"></div></div><div style="margin:16px 0 9px;display:flex;gap:9px;align-items:center"><div class="skeleton skeleton-line" style="width:70px;height:24px;border-radius:6px"></div><div class="skeleton skeleton-line w-50" style="margin:0"></div></div><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-65 sm"></div></div><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-85 sm"></div></div></div>
     </section>
 
     <!-- ===== PUBLIC: ZIELE ===== -->
     <section id="view-destinations" class="view">
       <div class="section-title">Ziele &amp; Geschichte</div>
-      <div id="destinations-container"></div>
+      <div id="destinations-container"><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-65 sm"></div></div><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-50 sm"></div></div><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-85 sm"></div></div></div>
     </section>
 
     <!-- ===== PUBLIC: KONTAKTE ===== -->
     <section id="view-contacts" class="view">
       <div class="section-title">Kontakte</div>
-      <div id="contacts-container"></div>
+      <div id="contacts-container"><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-65 sm"></div></div><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-50 sm"></div></div><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-85 sm"></div></div><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-65 sm"></div></div></div>
     </section>
 
     <!-- ===== PUBLIC: NOTIZEN ===== -->
@@ -1242,10 +1292,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     DB.log('Auth: Keine aktive Session (nicht eingeloggt)', 'info');
   }
 
-  sbAuth.onAuthStateChange((_ev, session) => {
+  sbAuth.onAuthStateChange((event, session) => {
     adminState.session = session;
     adminState.user    = session?.user ?? null;
-    if (session) showAdminLoggedIn(); else showAdminLoggedOut();
+    if (session) {
+      showAdminLoggedIn();
+    } else if (event === 'SIGNED_OUT') {
+      // Toast nur anzeigen wenn der User sich aktiv abgemeldet hat,
+      // nicht beim initialen Laden ohne Session
+      showAdminLoggedOut();
+    } else {
+      // Initialer Load ohne Session – UI zurücksetzen ohne Toast
+      showAdminLoggedOut(false);
+    }
   });
 
   registerSW();
@@ -1472,17 +1531,21 @@ function renderSchedule() {
     c.innerHTML = '<p style="color:var(--text-soft);font-size:.82rem">Keine Daten.</p>';
     return;
   }
+  const todayStr = new Date().toISOString().slice(0, 10);
   let h = '';
   for (const day of data.days) {
-    h += '<div class="day-header">'
-       + '<span class="day-badge">Tag ' + day.day_number + '</span>'
+    const isToday = day.date === todayStr;
+    h += '<div class="' + (isToday ? 'day-block-today' : '') + '">'
+       + '<div class="day-header">'
+       + '<span class="day-badge ' + (isToday ? 'day-badge-today' : '') + '">Tag ' + day.day_number + '</span>'
        + '<span class="day-date-label">' + fmtDate(day.date) + ' &middot; ' + x(day.label||'') + '</span>'
+       + (isToday ? ' <span class="day-today-label">Heute</span>' : '')
        + '</div>';
     for (const item of (day.schedule_items || [])) {
       const mq = encodeURIComponent(item.place + ', Sizilien, Italien');
       const mapsHref = 'https://www.google.com/maps/search/?api=1&query=' + mq;
-      h += '<div class="schedule-item" id="si-' + item.id + '">'
-         + '<div class="si-time">' + x(item.time||'') + '</div>'
+      h += '<div class="schedule-item ' + (isToday ? 'schedule-item-today' : '') + '" id="si-' + item.id + '">'
+         + '<div class="si-time ' + (isToday ? 'si-time-today' : '') + '">' + x(item.time||'') + '</div>'
          + '<div style="flex:1;min-width:0">'
          + '<div class="si-place">' + x(item.place) + '</div>'
          + '<div class="si-desc">' + x(item.description||'') + '</div>'
@@ -1490,8 +1553,14 @@ function renderSchedule() {
          + '&#128205; In Maps &#246;ffnen</a>'
          + '</div></div>';
     }
+    h += '</div>';
   }
   c.innerHTML = h;
+  // Heute automatisch ins Sichtfeld scrollen
+  setTimeout(function() {
+    var todayEl = document.querySelector('.day-block-today');
+    if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 150);
 }
 
 function renderDestinations() {
@@ -1674,18 +1743,19 @@ function showAdminLoggedIn() {
   el('admin-login-view').style.display   = 'none';
   el('admin-panel').style.display        = 'block';
   el('header-admin-badge').style.display = 'inline-block';
+  el('tab-log').classList.add('visible');
   el('admin-user-email').textContent     = adminState.user?.email || '–';
   renderAdminData();
   loadInfoAdminForm();
 }
 
-function showAdminLoggedOut() {
+function showAdminLoggedOut(showToast) {
   el('admin-login-view').style.display   = 'block';
   el('admin-panel').style.display        = 'none';
   el('header-admin-badge').style.display = 'none';
-  // Tab bleibt sichtbar – Login-Formular ist die Startseite des Admin-Tabs
+  el('tab-log').classList.remove('visible');
   window.showView('dashboard');
-  toast('Abgemeldet');
+  if (showToast !== false) toast('Abgemeldet');
 }
 
 // ============================================================

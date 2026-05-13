@@ -678,15 +678,17 @@ html, body {
 .hs-out   .hs-num { color: #d97706; }
 .hs-back  .hs-num { color: #16a34a; }
 .hs-lost  .hs-num { color: var(--danger); }
-.headset-row { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 7px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.headset-row { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; margin-bottom: 7px; display: flex; flex-direction: column; gap: 8px; }
+.hs-row-top  { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.hs-row-bot  { display: flex; align-items: center; gap: 8px; }
 .hs-device { font-size: .72rem; font-weight: 700; color: #fff; background: var(--navy); border-radius: 6px; padding: 3px 8px; flex-shrink: 0; min-width: 44px; text-align: center; }
-.hs-name   { font-weight: 600; font-size: .88rem; color: var(--text); flex: 1; min-width: 100px; }
-.hs-notes  { font-size: .74rem; color: var(--text-soft); margin-top: 2px; }
+.hs-name   { font-weight: 600; font-size: .88rem; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hs-notes  { font-size: .74rem; color: var(--text-soft); margin-top: 1px; }
 .hs-status { display: inline-flex; align-items: center; gap: 4px; font-size: .68rem; font-weight: 600; padding: 3px 9px; border-radius: 20px; flex-shrink: 0; white-space: nowrap; }
 .hs-status.out  { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 .hs-status.ok   { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
 .hs-status.lost { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-.hs-actions { display: flex; gap: 5px; flex-shrink: 0; }
+.hs-actions { display: flex; gap: 5px; margin-left: auto; }
 .headset-info-banner { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 13px 15px; margin-top: 10px; display: flex; gap: 10px; align-items: flex-start; }
 .hib-icon { font-size: 1.4rem; flex-shrink: 0; }
 .hib-text { font-size: .82rem; line-height: 1.55; color: #7c2d12; }
@@ -777,17 +779,18 @@ html, body {
 }
 /* Quick-Status Toggle */
 .hs-status-toggle {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: .68rem; font-weight: 600; padding: 4px 10px;
-  border-radius: 20px; flex-shrink: 0; white-space: nowrap;
-  cursor: pointer; border: none; transition: opacity .15s, transform .12s;
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .7rem; font-weight: 600; padding: 5px 12px;
+  border-radius: 20px; white-space: nowrap;
+  cursor: pointer; border: 1px solid transparent;
+  transition: opacity .15s, transform .12s;
   -webkit-tap-highlight-color: transparent;
 }
 .hs-status-toggle:active { transform: scale(.95); opacity: .85; }
-.hs-status-toggle.out  { background: #fef3c7; color: #92400e; }
-.hs-status-toggle.ok   { background: #dcfce7; color: #166534; }
-.hs-status-toggle.lost { background: #fee2e2; color: #991b1b; }
-.hs-status-toggle::after { content: ' &#9660;'; font-size: .55rem; opacity: .6; }
+.hs-status-toggle.out  { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.hs-status-toggle.ok   { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+.hs-status-toggle.lost { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+.hs-status-toggle::after { content: ' ▼'; font-size: .55rem; opacity: .5; }
 </style>
 </head>
 <body>
@@ -2393,20 +2396,24 @@ var HS_LABEL = {
 
 function hsRowHtml(hs, isAdmin) {
   var sc  = hsStatus(hs);
+  // Zeile 1: Geräte-Nr + vollständiger Name
   var row = '<div class="headset-row">'
+    + '<div class="hs-row-top">'
     + '<div class="hs-device">' + x(hs.device_nr || '?') + '</div>'
     + '<div style="flex:1;min-width:0"><div class="hs-name">' + x(hs.name) + '</div>'
     + (hs.notes ? '<div class="hs-notes">' + x(hs.notes) + '</div>' : '')
-    + '</div>';
+    + '</div></div>';
+  // Zeile 2: Status-Button + Aktionen
   if (isAdmin) {
-    row += '<button class="hs-status-toggle ' + sc + '" onclick="window.cycleHsStatus(&#39;' + hs.id + '&#39;)">'
-      + HS_LABEL[sc] + ' &#9660;</button>'
+    row += '<div class="hs-row-bot">'
+      + '<button class="hs-status-toggle ' + sc + '" onclick="window.cycleHsStatus(&#39;' + hs.id + '&#39;)">'
+      + HS_LABEL[sc] + '</button>'
       + '<div class="hs-actions">'
       + '<button class="btn-sm btn-sm-outline" onclick="window.openHsModal(&#39;' + hs.id + '&#39;)">&#x270F;</button>'
       + '<button class="btn-sm btn-sm-danger"  onclick="window.deleteHs(&#39;' + hs.id + '&#39;)">&#x1F5D1;</button>'
-      + '</div>';
+      + '</div></div>';
   } else {
-    row += '<span class="hs-status ' + sc + '">' + HS_LABEL[sc] + '</span>';
+    row += '<div class="hs-row-bot"><span class="hs-status ' + sc + '">' + HS_LABEL[sc] + '</span></div>';
   }
   return row + '</div>';
 }
@@ -2513,9 +2520,11 @@ function renderPublicHeadsets() {
   for (var i = 0; i < all.length; i++) {
     var hs = all[i]; var sc = hsStatus(hs);
     h += '<div class="hs-pub-row status-' + sc + '">'
+      + '<div class="hs-row-top" style="width:100%">'
       + '<div class="hs-pub-device">' + x(hs.device_nr||'?') + '</div>'
       + '<div class="hs-pub-name">' + x(hs.name) + '</div>'
-      + '<span class="hs-pub-badge ' + sc + '">' + HS_LABEL[sc] + '</span>'
+      + '</div>'
+      + '<div class="hs-row-bot"><span class="hs-pub-badge ' + sc + '">' + HS_LABEL[sc] + '</span></div>'
       + '</div>';
   }
   h += '<div class="hs-pub-notice"><span>&#x26A0;&#xFE0F;</span>'

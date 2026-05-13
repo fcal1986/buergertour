@@ -1349,45 +1349,50 @@ html, body {
         <div id="atab-book" class="admin-section" style="padding:0;overflow:hidden;border-radius:10px">
           <div id="book-reader">
 
-            <!-- Toolbar -->
-            <div class="reader-toolbar">
-              <button class="reader-icon-btn" id="book-toc-btn" onclick="window.bookToggleToc()" title="Inhaltsverzeichnis">
+            <!-- ── TOOLBAR ── -->
+            <div class="reader-toolbar" id="book-toolbar-read">
+              <button class="reader-icon-btn" onclick="window.bookToggleToc()">
                 <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="16" y2="12"/><line x1="3" y1="18" x2="12" y2="18"/></svg>
               </button>
-              <div class="reader-toolbar-title" id="book-toolbar-title">Bürgertour 2026</div>
-              <button class="reader-add-btn" id="book-add-btn" onclick="window.bookNewChapter()" style="display:none" title="Neues Kapitel">+ Kapitel</button>
-              <button class="book-public-toggle not-public" id="book-pub-toggle" onclick="window.bookTogglePublic()" style="display:none">
-                <span class="book-public-dot"></span>
-                <span id="book-pub-label">Nicht öffentlich</span>
+              <div class="reader-toolbar-title" id="book-toolbar-title">B&uuml;rgertour 2026</div>
+              <!-- Admin-Buttons (nur sichtbar wenn eingeloggt) -->
+              <button class="book-pub-label private" id="book-pub-toggle" onclick="window.bookTogglePublic()" style="display:none">
+                <span class="pub-dot"></span><span id="book-pub-text">Nicht &ouml;ffentlich</span>
               </button>
-              <!-- Public Toggle als Label-Button (nur Admin) -->
-              <button class="book-pub-label private" id="book-pub-toggle" onclick="window.bookTogglePublic()" style="display:none" title="Klicken zum Umschalten">
-                <span class="pub-dot"></span>
-                <span id="book-pub-text">Nicht &ouml;ffentlich</span>
-              </button>
-              <!-- Kapitel hinzufügen -->
-              <button class="reader-icon-btn" id="book-add-btn" onclick="window.bookAddChapter()" style="display:none" title="Neues Kapitel">
-                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              </button>
-              <!-- Bearbeiten -->
-              <button class="reader-icon-btn" id="book-edit-btn" onclick="window.bookToggleEdit()" style="display:none" title="Bearbeiten">
+              <button class="reader-icon-btn" id="book-edit-btn" onclick="window.bookStartEdit()" style="display:none" title="Bearbeiten">
                 <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </button>
-              <!-- Einstellungen -->
-              <button class="reader-icon-btn" id="book-settings-btn" onclick="window.bookToggleSettings()" title="Einstellungen">
+              <button class="reader-icon-btn" onclick="window.bookToggleSettings()" id="book-settings-btn" title="Einstellungen">
                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-              </button>
-              <!-- Löschen -->
-              <button class="reader-icon-btn" id="book-del-btn" onclick="window.bookDeleteChapter()" style="display:none;color:#dc2626" title="Kapitel l&ouml;schen">
-                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
               </button>
             </div>
 
-            <!-- Einstellungen Popup (versteckt) -->
+            <!-- ── EDIT TOOLBAR (mobile-optimiert, ersetzt Lese-Toolbar) ── -->
+            <div id="book-toolbar-edit" style="display:none">
+              <!-- Zeile 1: Titel -->
+              <div style="padding:10px 12px 6px;background:#fffbeb;border-bottom:1px solid #fde68a">
+                <input type="text" id="book-edit-title"
+                  style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;font-size:.9rem;font-weight:600;color:var(--text);background:var(--surface);outline:none"
+                  placeholder="Kapitel-Titel" />
+              </div>
+              <!-- Zeile 2: Markdown-Hinweis + Aktionen -->
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fffbeb;border-bottom:1px solid #fde68a;flex-wrap:wrap">
+                <span style="font-size:.7rem;color:#92400e;flex:1;min-width:140px">
+                  &#x270F;&nbsp;<b>**fett**</b> &nbsp;<i>*kursiv*</i> &nbsp;<b>## H2</b> &nbsp;- Liste &nbsp;&gt; Zitat
+                </span>
+                <button class="btn btn-primary"   style="width:auto;margin:0;padding:9px 18px;font-size:.85rem;flex-shrink:0" onclick="window.bookSaveChapter()">&#x2713; Speichern</button>
+                <button class="btn btn-secondary" style="width:auto;margin:0;padding:9px 14px;font-size:.85rem;flex-shrink:0" onclick="window.bookCancelEdit()">Abbrechen</button>
+                <button class="reader-icon-btn"   style="color:#dc2626;flex-shrink:0" id="book-del-btn" onclick="window.bookDeleteChapter()">
+                  <svg viewBox="0 0 24 24" width="18" height="18"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- ── EINSTELLUNGEN POPUP ── -->
             <div class="reader-settings-popup" id="book-settings-popup" style="display:none">
-              <label>Schriftgröße</label>
+              <label>Schriftgr&ouml;&szlig;e</label>
               <div class="font-size-row">
-                <button onclick="window.bookFontSize(-1)">A−</button>
+                <button onclick="window.bookFontSize(-1)">A&minus;</button>
                 <span class="font-size-display" id="book-font-display">16px</span>
                 <button onclick="window.bookFontSize(+1)">A+</button>
               </div>
@@ -1395,37 +1400,36 @@ html, body {
                 <label style="margin:0">Dunkel</label>
                 <button class="toggle-switch" id="book-dark-toggle" onclick="window.bookToggleDark()"></button>
               </div>
+              <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px" id="book-admin-settings" style="display:none">
+                <button class="btn btn-secondary" style="width:100%;margin:0;font-size:.8rem" onclick="window.bookAddChapter()">+ Neues Kapitel</button>
+              </div>
             </div>
 
-            <!-- Inhaltsverzeichnis Overlay (versteckt) -->
+            <!-- ── INHALTSVERZEICHNIS OVERLAY ── -->
             <div class="reader-toc-overlay" id="book-toc" style="display:none">
               <div class="toc-title">&#x1F4D6; Inhaltsverzeichnis</div>
               <div id="book-toc-list"></div>
+              <div id="book-toc-admin-actions" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+                <button class="btn btn-primary" style="margin:0;font-size:.85rem" onclick="window.bookAddChapter();window.bookToggleToc()">+ Neues Kapitel hinzuf&uuml;gen</button>
+              </div>
             </div>
 
-            <!-- Edit-Bar (versteckt) -->
-            <div class="reader-edit-bar" id="book-edit-bar" style="display:none">
-              <span>&#x270F; Markdown: **fett**, *kursiv*, ## Überschrift, - Liste, > Zitat</span>
-              <button class="btn btn-primary" style="width:auto;margin:0;padding:6px 14px;font-size:.78rem" onclick="window.bookSaveChapter()">Speichern</button>
-              <button class="btn btn-secondary" style="width:auto;margin:0;padding:6px 12px;font-size:.78rem" onclick="window.bookCancelEdit()">Abbrechen</button>
-              <button class="btn btn-danger" style="width:auto;margin:0;padding:6px 10px;font-size:.78rem" onclick="window.bookDeleteChapter()">&#x1F5D1;</button>
-            </div>
-
-            <!-- Textarea (Edit-Modus, versteckt) -->
-            <textarea id="book-edit-textarea" style="display:none"></textarea>
-
-            <!-- Lese-Bereich -->
+            <!-- ── LESE-BEREICH ── -->
             <div class="reader-scroll" id="book-scroll">
               <div class="reader-chapter-label" id="book-part-label"></div>
-              <div class="reader-chapter-title" id="book-chapter-title">Wird geladen…</div>
+              <div class="reader-chapter-title" id="book-chapter-title">Wird geladen&hellip;</div>
               <div class="reader-body" id="book-chapter-body"></div>
             </div>
 
-            <!-- Navigation -->
+            <!-- ── TEXTAREA (Edit-Modus) ── -->
+            <textarea id="book-edit-textarea"
+              style="display:none;flex:1;width:100%;padding:16px;font-family:'Inter',sans-serif;font-size:.9rem;line-height:1.65;color:var(--text);background:var(--surface);border:none;outline:none;resize:none;overflow-y:auto"></textarea>
+
+            <!-- ── NAVIGATION ── -->
             <div class="reader-nav">
               <button class="reader-nav-btn" id="book-prev-btn" onclick="window.bookNav(-1)">
                 <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-                Zurück
+                Zur&uuml;ck
               </button>
               <span class="reader-progress" id="book-progress">1 / 14</span>
               <button class="reader-nav-btn" id="book-next-btn" onclick="window.bookNav(+1)">

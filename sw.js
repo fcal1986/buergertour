@@ -3,7 +3,7 @@
 // Cache-First für App-Shell, Network-First für Supabase-Calls
 // ============================================================
 
-const CACHE = 'buergerreise-v3';
+const CACHE = 'buergerreise-v202605130555';
 const SHELL = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {

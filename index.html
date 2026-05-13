@@ -2210,15 +2210,43 @@ function loading(on) { el('loading-bar').classList.toggle('active', on); }
 // SERVICE WORKER
 // ============================================================
 function registerSW() {
-  // Service Worker nur auf echten Domains registrieren,
-  // nicht in Previews / iFrames (claudeusercontent.com etc.)
   if (!('serviceWorker' in navigator)) return;
   const host = location.hostname;
   const isPreview = host.includes('claudeusercontent') || host === 'localhost' || host === '127.0.0.1';
-  if (isPreview) { console.log('[SW] Übersprungen (Preview/Dev-Umgebung)'); return; }
-  navigator.serviceWorker.register('./sw.js')
-    .then(() => DB.log('Service Worker registriert', 'ok'))
-    .catch(e => DB.log('Service Worker FEHLER: ' + e.message, 'error'));
+  if (isPreview) { console.log('[SW] Uebersprungen (Preview)'); return; }
+
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    DB.log('Service Worker registriert', 'ok');
+
+    // Auf neue Version prüfen
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          // Neue Version installiert – Seite neu laden
+          DB.log('Neue App-Version verfügbar – lade neu...', 'ok');
+          toast('Neue Version verfügbar – Seite wird aktualisiert...', false);
+          setTimeout(() => location.reload(), 1800);
+        }
+      });
+    });
+  }).catch(e => DB.log('Service Worker FEHLER: ' + e.message, 'error'));
+
+  // Nachricht vom SW empfangen (bei Aktivierung)
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data && e.data.type === 'SW_UPDATED') {
+      DB.log('SW_UPDATED signal empfangen', 'info');
+    }
+  });
+
+  // Sichtbarkeit: beim Zurückkehren zur App auf Update prüfen
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg) reg.update();
+      });
+    }
+  });
 }
 
 

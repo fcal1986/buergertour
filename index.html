@@ -668,6 +668,75 @@ html, body {
 .skeleton-line.w-85 { width: 85%; }
 .skeleton-line.w-50 { width: 50%; }
 .skeleton-line.sm   { height: 10px; margin-bottom: 6px; }
+
+/* ── HEADSET VERWALTUNG ── */
+.headset-summary { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.hs-stat { flex: 1; min-width: 70px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; text-align: center; }
+.hs-stat .hs-num { font-size: 1.4rem; font-weight: 700; line-height: 1; }
+.hs-stat .hs-lbl { font-size: .65rem; color: var(--text-soft); margin-top: 3px; text-transform: uppercase; letter-spacing: .5px; }
+.hs-total .hs-num { color: var(--navy); }
+.hs-out   .hs-num { color: #d97706; }
+.hs-back  .hs-num { color: #16a34a; }
+.hs-lost  .hs-num { color: var(--danger); }
+.headset-row { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 7px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.hs-device { font-size: .72rem; font-weight: 700; color: #fff; background: var(--navy); border-radius: 6px; padding: 3px 8px; flex-shrink: 0; min-width: 44px; text-align: center; }
+.hs-name   { font-weight: 600; font-size: .88rem; color: var(--text); flex: 1; min-width: 100px; }
+.hs-notes  { font-size: .74rem; color: var(--text-soft); margin-top: 2px; }
+.hs-status { display: inline-flex; align-items: center; gap: 4px; font-size: .68rem; font-weight: 600; padding: 3px 9px; border-radius: 20px; flex-shrink: 0; white-space: nowrap; }
+.hs-status.out  { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.hs-status.ok   { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+.hs-status.lost { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+.hs-actions { display: flex; gap: 5px; flex-shrink: 0; }
+.headset-info-banner { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 13px 15px; margin-top: 10px; display: flex; gap: 10px; align-items: flex-start; }
+.hib-icon { font-size: 1.4rem; flex-shrink: 0; }
+.hib-text { font-size: .82rem; line-height: 1.55; color: #7c2d12; }
+.hib-text strong { display: block; font-size: .88rem; margin-bottom: 3px; }
+
+/* ── HEADSET ÖFFENTLICHE LISTE ── */
+.hs-pub-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
+}
+.hs-pub-stats {
+  display: flex; gap: 6px;
+}
+.hs-pub-stat {
+  font-size: .7rem; font-weight: 600; padding: 4px 10px;
+  border-radius: 20px; border: 1px solid;
+}
+.hs-pub-stat.out  { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.hs-pub-stat.back { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+.hs-pub-stat.lost { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+
+.hs-pub-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 6px;
+}
+.hs-pub-row.status-ok   { border-left: 3px solid #16a34a; }
+.hs-pub-row.status-out  { border-left: 3px solid #d97706; }
+.hs-pub-row.status-lost { border-left: 3px solid var(--danger); background: #fff5f5; }
+
+.hs-pub-device {
+  font-size: .7rem; font-weight: 700; color: #fff;
+  background: var(--navy); border-radius: 5px;
+  padding: 3px 8px; flex-shrink: 0; min-width: 38px; text-align: center;
+}
+.hs-pub-name   { font-weight: 600; font-size: .9rem; color: var(--text); flex: 1; }
+.hs-pub-badge  {
+  font-size: .66rem; font-weight: 600; padding: 3px 8px;
+  border-radius: 20px; flex-shrink: 0; white-space: nowrap;
+}
+.hs-pub-badge.out  { background: #fef3c7; color: #92400e; }
+.hs-pub-badge.ok   { background: #dcfce7; color: #166534; }
+.hs-pub-badge.lost { background: #fee2e2; color: #991b1b; }
+
+.hs-pub-notice {
+  background: #fff7ed; border: 1px solid #fed7aa;
+  border-radius: 10px; padding: 12px 14px;
+  font-size: .8rem; color: #7c2d12; line-height: 1.5;
+  margin-top: 12px; display: flex; gap: 9px; align-items: flex-start;
+}
 </style>
 </head>
 <body>
@@ -763,6 +832,18 @@ html, body {
     <!-- ===== PUBLIC: REISEINFOS ===== -->
     <section id="view-info" class="view"></section>
 
+
+    <!-- ===== PUBLIC: HEADSETS ===== -->
+    <section id="view-headsets" class="view">
+      <div class="section-title">Headsets</div>
+      <div id="hs-pub-container">
+        <!-- Skeleton -->
+        <div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-65 sm"></div></div>
+        <div class="skeleton-card"><div class="skeleton skeleton-line w-50"></div><div class="skeleton skeleton-line w-85 sm"></div></div>
+        <div class="skeleton-card"><div class="skeleton skeleton-line w-65"></div><div class="skeleton skeleton-line w-40 sm"></div></div>
+      </div>
+    </section>
+
     <!-- ===== ADMIN ===== -->
     <section id="view-admin" class="view">
 
@@ -807,6 +888,7 @@ html, body {
           <button class="admin-tab"        data-atab="dests"    onclick="showAdminTab('dests')">Ziele</button>
           <button class="admin-tab"        data-atab="contacts" onclick="showAdminTab('contacts')">Kontakte</button>
           <button class="admin-tab"        data-atab="info"     onclick="showAdminTab('info')">Info</button>
+          <button class="admin-tab"        data-atab="headsets" onclick="showAdminTab('headsets')">Headsets</button>
         </div>
 
         <!-- TAB: Trip Meta -->
@@ -906,6 +988,23 @@ html, body {
           </div>
         </div>
 
+
+        <!-- TAB: Headsets -->
+        <div id="atab-headsets" class="admin-section">
+          <div class="headset-summary" id="hs-summary"></div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+            <button class="btn btn-primary" style="flex:1;margin-top:0" onclick="openHsModal(null)">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Manuell hinzuf&uuml;gen
+            </button>
+            <button class="btn btn-secondary" style="flex:1;margin-top:0" onclick="importFromContacts()">
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              Aus Kontakten
+            </button>
+          </div>
+          <div id="hs-list"></div>
+        </div>
+
       </div><!-- /admin-panel -->
     </section><!-- /view-admin -->
 
@@ -936,6 +1035,10 @@ html, body {
     <button class="tab-btn" data-view="info" onclick="showView('info')">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       Info
+    </button>
+    <button class="tab-btn" data-view="headsets" onclick="showView('headsets')">
+      <svg viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+      Headsets
     </button>
     <button class="tab-btn" id="tab-admin" data-view="admin" onclick="showView('admin')">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 2-8 4v1h16v-1c0-2-2-4-8-4z"/><path d="M18 3l1.5 1.5L18 6l-1.5-1.5z" stroke-width="1.2"/></svg>
@@ -1383,6 +1486,19 @@ async function loadWeather() {
   }
 }
 
+
+// Öffentliche Headset-Liste auch ohne Admin-Login laden
+async function loadPublicHeadsets() {
+  var client = getSB();
+  if (!client) return;
+  try {
+    var res = await client.from('headsets').select('id,name,device_nr,returned_at,returned_ok').eq('trip_id', TRIP_ID).order('created_at');
+    if (res.error) throw res.error;
+    hsData = res.data || [];
+    renderPublicHeadsets();
+  } catch(e) { DB.log('Public Headsets: ' + e.message, 'warn'); }
+}
+
 async function bootData() {
   loadWeather();
   DB.log('App gestartet – Host: ' + location.hostname, 'info');
@@ -1398,6 +1514,7 @@ async function bootData() {
   }
   render();
   renderInfoView();
+  await loadPublicHeadsets();
   loading(false);
 }
 
@@ -1747,6 +1864,7 @@ function showAdminLoggedIn() {
   el('admin-user-email').textContent     = adminState.user?.email || '–';
   renderAdminData();
   loadInfoAdminForm();
+  loadHeadsets();
 }
 
 function showAdminLoggedOut(showToast) {
@@ -2079,10 +2197,192 @@ function renderInfoView() {
     + '</div></div>'
     + '<div class="info-card"><div class="info-card-hdr">&#x1F34B; Sizilianische Spezialit&auml;ten</div><div class="info-card-body">'
     + lines2rows(d.specials, false)
-    + '</div></div>';
+    + '</div></div>'
+    + headsetInfoBanner();
 }
 
 window.saveInfoData = saveInfoData; // async
+
+// ============================================================
+// HEADSET-VERWALTUNG
+// ============================================================
+var hsData = [];
+
+async function loadHeadsets() {
+  var client = getSB();
+  if (!client) return;
+  try {
+    var res = await client.from('headsets').select('*').eq('trip_id', TRIP_ID).order('created_at');
+    if (res.error) throw res.error;
+    hsData = res.data || [];
+    renderHeadsets();
+    renderPublicHeadsets();
+    DB.log('Headsets: ' + hsData.length, 'ok');
+  } catch(e) { DB.log('Headsets FEHLER: ' + e.message, 'error'); }
+}
+
+function renderHeadsets() {
+  var total = hsData.length;
+  var out   = hsData.filter(function(h){ return !h.returned_at; }).length;
+  var back  = hsData.filter(function(h){ return h.returned_at && h.returned_ok !== false; }).length;
+  var lost  = hsData.filter(function(h){ return h.returned_at && h.returned_ok === false; }).length;
+  var sum = el('hs-summary');
+  if (sum) sum.innerHTML =
+    '<div class="hs-stat hs-total"><div class="hs-num">' + total + '</div><div class="hs-lbl">Gesamt</div></div>'
+    + '<div class="hs-stat hs-out"><div class="hs-num">' + out + '</div><div class="hs-lbl">Ausgegeben</div></div>'
+    + '<div class="hs-stat hs-back"><div class="hs-num">' + back + '</div><div class="hs-lbl">Zur&uuml;ck</div></div>'
+    + '<div class="hs-stat hs-lost"><div class="hs-num">' + lost + '</div><div class="hs-lbl">Verlust</div></div>';
+  var list = el('hs-list');
+  if (!list) return;
+  if (!hsData.length) { list.innerHTML = '<p class="preview-text">Noch keine Eintr&auml;ge.</p>'; return; }
+  var h = '';
+  for (var i = 0; i < hsData.length; i++) {
+    var hs = hsData[i];
+    var sc, sl;
+    if (!hs.returned_at)             { sc='out';  sl='&#x1F7E1; Ausgegeben'; }
+    else if (hs.returned_ok===false) { sc='lost'; sl='&#x1F534; Verlust / Schaden'; }
+    else                             { sc='ok';   sl='&#x1F7E2; Zur&uuml;ck &#x2713;'; }
+    h += '<div class="headset-row">'
+      + '<div class="hs-device">' + x(hs.device_nr||'?') + '</div>'
+      + '<div style="flex:1;min-width:0"><div class="hs-name">' + x(hs.name) + '</div>'
+      + (hs.notes ? '<div class="hs-notes">' + x(hs.notes) + '</div>' : '') + '</div>'
+      + '<span class="hs-status ' + sc + '">' + sl + '</span>'
+      + '<div class="hs-actions">'
+      + '<button class="btn-sm btn-sm-outline" onclick="openHsModal(&#39;' + hs.id + '&#39;)">&#x270F;</button>'
+      + '<button class="btn-sm btn-sm-danger"  onclick="deleteHs(&#39;' + hs.id + '&#39;)">&#x1F5D1;</button>'
+      + '</div></div>';
+  }
+  list.innerHTML = h;
+}
+
+function openHsModal(hsId) {
+  var hs = hsId ? hsData.find(function(h){ return h.id===hsId; }) : null;
+  var isOut  = !hs || !hs.returned_at;
+  var isOk   = hs && hs.returned_at && hs.returned_ok !== false;
+  var isLost = hs && hs.returned_at && hs.returned_ok === false;
+  openModal(hsId ? 'Headset bearbeiten' : 'Headset ausgeben',
+    '<div class="field-group"><label>Name <span class="required">*</span></label>'
+    + '<input type="text" id="hs-name" value="' + x(hs?hs.name:'') + '" placeholder="Vor- und Nachname" /></div>'
+    + '<div class="field-group"><label>Ger&auml;te-Nr.</label>'
+    + '<input type="text" id="hs-nr" value="' + x(hs&&hs.device_nr?hs.device_nr:'') + '" placeholder="z.B. H-01" /></div>'
+    + '<div class="field-group"><label>Status</label><select id="hs-status">'
+    + '<option value="out"'  + (isOut  ?' selected':'') + '>Ausgegeben (noch nicht zur&uuml;ck)</option>'
+    + '<option value="ok"'   + (isOk   ?' selected':'') + '>Zur&uuml;ck &#x2713; &ndash; sorgf&auml;ltig</option>'
+    + '<option value="lost"' + (isLost ?' selected':'') + '>Verlust / Schaden &ndash; 50 &euro;</option>'
+    + '</select></div>'
+    + '<div class="field-group"><label>Bemerkungen</label>'
+    + '<textarea id="hs-notes" rows="2" placeholder="z.B. Kratzer am Gehaeuse">' + x(hs&&hs.notes?hs.notes:'') + '</textarea></div>',
+    async function() {
+      var name = gv('hs-name');
+      if (!name) { toast('Name fehlt','error'); return false; }
+      var status = el('hs-status').value;
+      var now = new Date().toISOString();
+      var fields = {
+        name:        name,
+        device_nr:   gv('hs-nr') || null,
+        notes:       el('hs-notes') ? el('hs-notes').value.trim() : '',
+        returned_at: status!=='out' ? (hs&&hs.returned_at?hs.returned_at:now) : null,
+        returned_ok: status==='ok' ? true : status==='lost' ? false : null,
+      };
+      var client = getSB();
+      if (!client) { toast('Nicht verbunden','error'); return false; }
+      var res = hsId
+        ? await client.from('headsets').update(fields).eq('id', hsId)
+        : await client.from('headsets').insert(Object.assign({}, fields, {trip_id: TRIP_ID}));
+      if (res.error) throw res.error;
+      await loadHeadsets();
+    }
+  );
+}
+
+function renderPublicHeadsets() {
+  var c = el('hs-pub-container');
+  if (!c) return;
+
+  if (!hsData.length) {
+    c.innerHTML = '<p style="color:var(--text-soft);font-size:.82rem;padding:8px 0">Noch keine Headsets ausgegeben.</p>';
+    return;
+  }
+
+  var out  = hsData.filter(function(h){ return !h.returned_at; });
+  var back = hsData.filter(function(h){ return h.returned_at && h.returned_ok !== false; });
+  var lost = hsData.filter(function(h){ return h.returned_at && h.returned_ok === false; });
+
+  // Reihenfolge: Verlust oben, dann Ausgegeben, dann Zurück
+  var sorted = lost.concat(out).concat(back);
+
+  var h = '<div class="hs-pub-header">'
+    + '<span style="font-size:.8rem;color:var(--text-soft)">' + hsData.length + ' Ger&auml;te vergeben</span>'
+    + '<div class="hs-pub-stats">'
+    + (out.length  ? '<span class="hs-pub-stat out">&#x1F7E1; ' + out.length  + ' draussen</span>' : '')
+    + (back.length ? '<span class="hs-pub-stat back">&#x1F7E2; ' + back.length + ' zur&uuml;ck</span>' : '')
+    + (lost.length ? '<span class="hs-pub-stat lost">&#x1F534; ' + lost.length + ' Verlust</span>' : '')
+    + '</div></div>';
+
+  for (var i = 0; i < sorted.length; i++) {
+    var hs = sorted[i];
+    var sc, sl;
+    if (!hs.returned_at)             { sc='out';  sl='Ausgegeben'; }
+    else if (hs.returned_ok===false) { sc='lost'; sl='Verlust / Schaden'; }
+    else                             { sc='ok';   sl='Zur&uuml;ck &#x2713;'; }
+    h += '<div class="hs-pub-row status-' + sc + '">'
+      + '<div class="hs-pub-device">' + x(hs.device_nr||'?') + '</div>'
+      + '<div class="hs-pub-name">' + x(hs.name) + '</div>'
+      + '<span class="hs-pub-badge ' + sc + '">' + sl + '</span>'
+      + '</div>';
+  }
+
+  h += '<div class="hs-pub-notice">'
+    + '<span>&#x26A0;&#xFE0F;</span>'
+    + '<span>Bei Verlust oder Besch&auml;digung des Headsets werden <strong>50 &euro;</strong> in Rechnung gestellt.</span>'
+    + '</div>';
+
+  c.innerHTML = h;
+}
+
+window.openHsModal = openHsModal;
+
+async function deleteHs(hsId) {
+  var hs = hsData.find(function(h){ return h.id===hsId; });
+  if (!confirm('Eintrag f&uuml;r "' + (hs?hs.name:'?') + '" l&ouml;schen?')) return;
+  var res = await getSB().from('headsets').delete().eq('id', hsId);
+  if (res.error) { toast(res.error.message,'error'); return; }
+  await loadHeadsets(); toast('Gel&ouml;scht');
+}
+window.deleteHs = deleteHs;
+
+async function importFromContacts() {
+  if (!data.contacts||!data.contacts.length) { toast('Keine Kontakte','error'); return; }
+  var existing = hsData.map(function(h){ return h.name.toLowerCase(); });
+  var skip = ['notruf','polizei','hotel','carabinieri','theis','stadtf','fahrer','busunter'];
+  var toImport = data.contacts.filter(function(c) {
+    var rl = (c.role||'').toLowerCase();
+    return !skip.some(function(s){ return rl.includes(s); })
+      && !existing.includes(c.name.toLowerCase());
+  });
+  if (!toImport.length) { toast('Alle Kontakte bereits erfasst'); return; }
+  var names = toImport.map(function(c){ return '  - '+c.name; }).join('\n');
+  if (!confirm(toImport.length+' Kontakt(e) importieren?\n\n'+names)) return;
+  var client = getSB();
+  if (!client) { toast('Nicht verbunden','error'); return; }
+  var rows = toImport.map(function(c,i){
+    return {trip_id:TRIP_ID, name:c.name, device_nr:'H-'+String(i+hsData.length+1).padStart(2,'0'), notes:''};
+  });
+  var res = await client.from('headsets').insert(rows);
+  if (res.error) { toast(res.error.message,'error'); return; }
+  await loadHeadsets();
+  toast(toImport.length+' Kontakte importiert');
+}
+window.importFromContacts = importFromContacts;
+
+function headsetInfoBanner() {
+  return '<div class="headset-info-banner"><div class="hib-icon">&#x1F3A7;</div>'
+    + '<div class="hib-text"><strong>Headset-Hinweis</strong>'
+    + 'Jeder Teilnehmer erh&auml;lt ein Headset f&uuml;r die Stadtf&uuml;hrungen. '
+    + 'Bitte gib das Ger&auml;t nach der F&uuml;hrung sorgf&auml;ltig zur&uuml;ck. '
+    + 'Bei Verlust oder Besch&auml;digung werden <strong>50 &euro;</strong> in Rechnung gestellt.'
+    + '</div></div>';
+}
 
 // ============================================================
 // PUBLIC LOG DIALOG

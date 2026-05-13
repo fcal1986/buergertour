@@ -861,7 +861,13 @@ html, body {
 
     <!-- ===== PUBLIC: KONTAKTE ===== -->
     <section id="view-contacts" class="view">
-      <div class="section-title">Kontakte</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="section-title" style="margin-bottom:0">Kontakte</div>
+        <select class="hs-sort-select" id="contacts-sort" onchange="renderContacts()">
+          <option value="default">Originalreihenfolge</option>
+          <option value="name">Nachname A&#x2013;Z</option>
+        </select>
+      </div>
       <div id="contacts-container"><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-65 sm"></div></div><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-50 sm"></div></div><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-85 sm"></div></div><div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-65 sm"></div></div></div>
     </section>
 
@@ -886,7 +892,14 @@ html, body {
 
     <!-- ===== PUBLIC: HEADSETS ===== -->
     <section id="view-headsets" class="view">
-      <div class="section-title">Headsets</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="section-title" style="margin-bottom:0">Headsets</div>
+        <select class="hs-sort-select" id="pub-hs-sort" onchange="renderPublicHeadsets()" style="margin-left:8px">
+          <option value="status">Status (Verlust zuerst)</option>
+          <option value="name">Nachname A&#x2013;Z</option>
+          <option value="nr">Ger&auml;te-Nr.</option>
+        </select>
+      </div>
       <div id="hs-pub-container">
         <!-- Skeleton -->
         <div class="skeleton-card"><div class="skeleton skeleton-line w-40"></div><div class="skeleton skeleton-line w-65 sm"></div></div>
@@ -1801,8 +1814,12 @@ function renderContacts() {
     c.innerHTML = '<p style="color:var(--text-soft);font-size:.82rem">Keine Daten.</p>';
     return;
   }
+  const sort = el('contacts-sort') ? el('contacts-sort').value : 'default';
+  const list = sort === 'name'
+    ? data.contacts.slice().sort((a,b) => lastName(a.name).localeCompare(lastName(b.name),'de'))
+    : data.contacts;
   let h = '';
-  for (const ct of data.contacts) {
+  for (const ct of list) {
     const ini = ct.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
     h += '<div class="contact-card">'
        + '<div class="contact-avatar">' + ini + '</div>'
@@ -2287,8 +2304,109 @@ async function loadHeadsets() {
 }
 
 
-// ── HEADSET FILTER / SORT / ALPHA ───────────────────────────────────────────
+// ============================================================
+// HEADSET – Filter, Sort, Cycle-Status, Alpha-Gruppen
+// ALLE window.* exports hier oben damit onclick-Handler funktionieren
+// ============================================================
+var hsData  = [];
 var hsFilter = 'all';
+
+// ── Nachname extrahieren (für Sortierung + Alpha-Gruppen) ──
+function lastName(name) {
+  var clean = name.replace(/^(Dr\.?|Prof\.?|Gen\.\s*\w+)\s+/i, '').trim();
+  var parts = clean.split(/\s+/);
+  return parts[parts.length - 1] || name;
+}
+
+// ── Status-Hilfsfunktion ───────────────────────────────────
+function hsStatus(hs) {
+  if (!hs.returned_at)           return 'out';
+  if (hs.returned_ok === false)  return 'lost';
+  return 'ok';
+}
+var HS_LABEL = { out: '&#x1F7E1; Ausgegeben', ok: '&#x1F7E2; Zur&uuml;ck', lost: '&#x1F534; Verlust' };
+
+// ── Eine Headset-Zeile rendern ─────────────────────────────
+function hsRowHtml(hs, isAdmin) {
+  var sc = hsStatus(hs);
+  var row = '<div class="headset-row">'
+    + '<div class="hs-device">' + x(hs.device_nr || '?') + '</div>'
+    + '<div style="flex:1;min-width:0"><div class="hs-name">' + x(hs.name) + '</div>'
+    + (hs.notes ? '<div class="hs-notes">' + x(hs.notes) + '</div>' : '')
+    + '</div>';
+  if (isAdmin) {
+    // Klickbarer Status-Toggle + Edit/Delete
+    row += '<button class="hs-status-toggle ' + sc + '" onclick="window.cycleHsStatus(&#39;' + hs.id + '&#39;)">'
+      + HS_LABEL[sc] + ' &#9660;</button>'
+      + '<div class="hs-actions">'
+      + '<button class="btn-sm btn-sm-outline" onclick="window.openHsModal(&#39;' + hs.id + '&#39;)">&#x270F;</button>'
+      + '<button class="btn-sm btn-sm-danger"  onclick="window.deleteHs(&#39;' + hs.id + '&#39;)">&#x1F5D1;</button>'
+      + '</div>';
+  } else {
+    row += '<span class="hs-status ' + sc + '">' + HS_LABEL[sc] + '</span>';
+  }
+  return row + '</div>';
+}
+
+// ── Liste rendern (mit optionaler Alpha-Gruppierung) ───────
+function renderHsList(list, container, isAdmin, groupAlpha) {
+  if (!container) return;
+  if (!list.length) {
+    container.innerHTML = '<p class="preview-text">Keine Eintr&auml;ge.</p>'; return;
+  }
+  var h = '';
+  if (groupAlpha) {
+    var lastLetter = '';
+    for (var i = 0; i < list.length; i++) {
+      var letter = lastName(list[i].name).charAt(0).toUpperCase();
+      if (letter !== lastLetter) {
+        if (lastLetter) h += '</div>';
+        h += '<div class="hs-alpha-group"><div class="hs-alpha-header">' + letter + '</div>';
+        lastLetter = letter;
+      }
+      h += hsRowHtml(list[i], isAdmin);
+    }
+    if (lastLetter) h += '</div>';
+  } else {
+    for (var j = 0; j < list.length; j++) h += hsRowHtml(list[j], isAdmin);
+  }
+  container.innerHTML = h;
+}
+
+// ── Admin-Liste filtern + rendern ──────────────────────────
+function filterHeadsets() {
+  var search = el('hs-search') ? el('hs-search').value.toLowerCase() : '';
+  var sort   = el('hs-sort')   ? el('hs-sort').value                 : 'name';
+
+  var filtered = hsData.filter(function(h) {
+    if (hsFilter === 'out')  return !h.returned_at;
+    if (hsFilter === 'ok')   return h.returned_at && h.returned_ok !== false;
+    if (hsFilter === 'lost') return h.returned_at && h.returned_ok === false;
+    return true;
+  });
+
+  if (search) filtered = filtered.filter(function(h) {
+    return h.name.toLowerCase().includes(search) || (h.device_nr||'').toLowerCase().includes(search);
+  });
+
+  filtered.sort(function(a, b) {
+    if (sort === 'nr') {
+      return parseInt((a.device_nr||'').replace(/\D/g,'') || 0) - parseInt((b.device_nr||'').replace(/\D/g,'') || 0);
+    }
+    if (sort === 'status') {
+      var order = { out:0, lost:1, ok:2 };
+      return (order[hsStatus(a)] - order[hsStatus(b)]) || lastName(a.name).localeCompare(lastName(b.name), 'de');
+    }
+    // name (default) – nach Nachname
+    return lastName(a.name).localeCompare(lastName(b.name), 'de');
+  });
+
+  var cnt = el('hs-count');
+  if (cnt) cnt.textContent = filtered.length + ' von ' + hsData.length + ' Eintr&auml;gen';
+
+  renderHsList(filtered, el('hs-list'), true, sort === 'name');
+}
+window.filterHeadsets = filterHeadsets;
 
 window.setHsFilter = function(f) {
   hsFilter = f;
@@ -2298,179 +2416,169 @@ window.setHsFilter = function(f) {
   filterHeadsets();
 };
 
-window.filterHeadsets = function() {
-  var search = (el('hs-search') ? el('hs-search').value.toLowerCase() : '');
-  var sort   = el('hs-sort')   ? el('hs-sort').value   : 'name';
-
-  var filtered = hsData.filter(function(h) {
-    if (hsFilter === 'out')  return !h.returned_at;
-    if (hsFilter === 'ok')   return h.returned_at && h.returned_ok !== false;
-    if (hsFilter === 'lost') return h.returned_at && h.returned_ok === false;
-    return true;
-  });
-
-  if (search) {
-    filtered = filtered.filter(function(h) {
-      return h.name.toLowerCase().includes(search)
-          || (h.device_nr||'').toLowerCase().includes(search);
-    });
-  }
-
-  filtered.sort(function(a, b) {
-    if (sort === 'nr') {
-      var na = parseInt((a.device_nr||'').replace(/\D/g,'') || '0');
-      var nb = parseInt((b.device_nr||'').replace(/\D/g,'') || '0');
-      return na - nb;
-    }
-    if (sort === 'status') {
-      var order = { out:0, lost:1, ok:2 };
-      var sa = !a.returned_at ? 'out' : a.returned_ok===false ? 'lost' : 'ok';
-      var sb = !b.returned_at ? 'out' : b.returned_ok===false ? 'lost' : 'ok';
-      return (order[sa]-order[sb]) || a.name.localeCompare(b.name,'de');
-    }
-    // name (default) – nach Nachname sortieren
-    return lastName(a.name).localeCompare(lastName(b.name), 'de');
-  });
-
-  var cnt = el('hs-count');
-  if (cnt) cnt.textContent = filtered.length + ' von ' + hsData.length + ' Eintraegen';
-
-  renderHsList(filtered, sort === 'name');
-};
-// alias für backward-compat
-function filterHeadsets() { window.filterHeadsets(); }
-
-// Nachname extrahieren (letztes Wort, ignoriert "Dr.", "Gen.")
-function lastName(name) {
-  var parts = name.replace(/^(Dr\.?|Prof\.?|Gen\.?)\s+/i,'').trim().split(/\s+/);
-  return parts[parts.length-1] || name;
-}
-
-function renderHsList(list, groupByAlpha) {
-  var container = el('hs-list');
-  if (!container) return;
-  if (!list.length) {
-    container.innerHTML = '<p class="preview-text">Keine Eintr&auml;ge f&uuml;r diese Auswahl.</p>';
-    return;
-  }
-
-  function rowHtml(hs) {
-    var sc, sl;
-    if (!hs.returned_at)             { sc='out';  sl='&#x1F7E1; Ausgegeben'; }
-    else if (hs.returned_ok===false) { sc='lost'; sl='&#x1F534; Verlust'; }
-    else                             { sc='ok';   sl='&#x1F7E2; Zur&uuml;ck'; }
-    // Nächster Status beim Klick: out→ok, ok→lost, lost→out
-    var nextStatus = sc==='out' ? 'ok' : sc==='ok' ? 'lost' : 'out';
-    return '<div class="headset-row">'
-      + '<div class="hs-device">' + x(hs.device_nr||'?') + '</div>'
-      + '<div style="flex:1;min-width:0"><div class="hs-name">' + x(hs.name) + '</div>'
-      + (hs.notes ? '<div class="hs-notes">' + x(hs.notes) + '</div>' : '')
-      + '</div>'
-      + '<button class="hs-status-toggle ' + sc + '" onclick="cycleHsStatus(&#39;' + hs.id + '&#39;)">'
-      + sl + '</button>'
-      + '<div class="hs-actions">'
-      + '<button class="btn-sm btn-sm-outline" onclick="openHsModal(&#39;' + hs.id + '&#39;)">&#x270F;</button>'
-      + '<button class="btn-sm btn-sm-danger"  onclick="deleteHs(&#39;' + hs.id + '&#39;)">&#x1F5D1;</button>'
-      + '</div></div>';
-  }
-
-  var h = '';
-  if (groupByAlpha) {
-    var lastLetter = '';
-    for (var i = 0; i < list.length; i++) {
-      var hs = list[i];
-      var letter = lastName(hs.name).charAt(0).toUpperCase();
-      if (letter !== lastLetter) {
-        if (lastLetter) h += '</div>';
-        h += '<div class="hs-alpha-group"><div class="hs-alpha-header">' + letter + '</div>';
-        lastLetter = letter;
-      }
-      h += rowHtml(hs);
-    }
-    if (lastLetter) h += '</div>';
-  } else {
-    for (var j = 0; j < list.length; j++) h += rowHtml(list[j]);
-  }
-  container.innerHTML = h;
-}
-
-// Schnell-Status-Wechsel per Klick: out → ok → lost → out
-window.cycleHsStatus = async function(hsId) {
-  var hs = hsData.find(function(h){ return h.id===hsId; });
-  if (!hs) return;
-  var now = new Date().toISOString();
-  var fields;
-  if (!hs.returned_at) {
-    // Ausgegeben → Zurück
-    fields = { returned_at: now, returned_ok: true };
-  } else if (hs.returned_ok !== false) {
-    // Zurück → Verlust
-    fields = { returned_at: hs.returned_at, returned_ok: false };
-  } else {
-    // Verlust → Ausgegeben (reset)
-    fields = { returned_at: null, returned_ok: null };
-  }
+// ── Headsets laden ─────────────────────────────────────────
+async function loadHeadsets() {
   var client = getSB();
   if (!client) return;
-  var res = await client.from('headsets').update(fields).eq('id', hsId);
-  if (res.error) { toast(res.error.message, 'error'); return; }
-  // Lokal updaten ohne vollen Reload für flüssiges Scroll-Erlebnis
-  Object.assign(hs, fields);
-  renderHeadsets(); // summary updaten
-  filterHeadsets(); // liste neu filtern/rendern
-};
+  try {
+    var res = await client.from('headsets').select('*').eq('trip_id', TRIP_ID).order('created_at');
+    if (res.error) throw res.error;
+    hsData = res.data || [];
+    renderHsSummary();
+    filterHeadsets();
+    renderPublicHeadsets();
+    DB.log('Headsets: ' + hsData.length, 'ok');
+  } catch(e) { DB.log('Headsets FEHLER: ' + e.message, 'error'); }
+}
 
-function renderHeadsets() {
-  // Summary Stats
+function renderHsSummary() {
   var total = hsData.length;
   var out   = hsData.filter(function(h){ return !h.returned_at; }).length;
   var back  = hsData.filter(function(h){ return h.returned_at && h.returned_ok !== false; }).length;
   var lost  = hsData.filter(function(h){ return h.returned_at && h.returned_ok === false; }).length;
   var sum = el('hs-summary');
-  if (sum) sum.innerHTML =
+  if (!sum) return;
+  sum.innerHTML =
     '<div class="hs-stat hs-total"><div class="hs-num">' + total + '</div><div class="hs-lbl">Gesamt</div></div>'
     + '<div class="hs-stat hs-out"><div class="hs-num">' + out + '</div><div class="hs-lbl">Ausgegeben</div></div>'
     + '<div class="hs-stat hs-back"><div class="hs-num">' + back + '</div><div class="hs-lbl">Zur&uuml;ck</div></div>'
     + '<div class="hs-stat hs-lost"><div class="hs-num">' + lost + '</div><div class="hs-lbl">Verlust</div></div>';
-  // Liste
+}
+
+function renderHeadsets() { renderHsSummary(); filterHeadsets(); }
+
+// ── Quick-Status-Wechsel: out→ok→lost→out ─────────────────
+window.cycleHsStatus = async function(hsId) {
+  var hs = hsData.find(function(h){ return h.id === hsId; });
+  if (!hs) return;
+  var now = new Date().toISOString();
+  var fields;
+  var sc = hsStatus(hs);
+  if (sc === 'out')  fields = { returned_at: now,           returned_ok: true  };
+  else if (sc === 'ok')   fields = { returned_at: hs.returned_at, returned_ok: false };
+  else               fields = { returned_at: null,          returned_ok: null  };
+  var client = getSB();
+  if (!client) return;
+  var res = await client.from('headsets').update(fields).eq('id', hsId);
+  if (res.error) { toast(res.error.message, 'error'); return; }
+  Object.assign(hs, fields);
+  renderHsSummary();
   filterHeadsets();
-}
+  renderPublicHeadsets();
+};
 
+// ── Modal: Headset anlegen / bearbeiten ───────────────────
+window.openHsModal = function(hsId) {
+  var hs = hsId ? hsData.find(function(h){ return h.id === hsId; }) : null;
+  var sc = hs ? hsStatus(hs) : 'out';
+  openModal(hsId ? 'Headset bearbeiten' : 'Headset ausgeben',
+    '<div class="field-group"><label>Name <span class="required">*</span></label>'
+    + '<input type="text" id="hs-name" value="' + x(hs ? hs.name : '') + '" placeholder="Vor- und Nachname" /></div>'
+    + '<div class="field-group"><label>Ger&auml;te-Nr.</label>'
+    + '<input type="text" id="hs-nr" value="' + x(hs && hs.device_nr ? hs.device_nr : '') + '" placeholder="z.B. H-01" /></div>'
+    + '<div class="field-group"><label>Status</label><select id="hs-status">'
+    + '<option value="out"'  + (sc==='out'  ? ' selected' : '') + '>Ausgegeben</option>'
+    + '<option value="ok"'   + (sc==='ok'   ? ' selected' : '') + '>Zur&uuml;ck &#x2713;</option>'
+    + '<option value="lost"' + (sc==='lost' ? ' selected' : '') + '>Verlust / Schaden – 50 &euro;</option>'
+    + '</select></div>'
+    + '<div class="field-group"><label>Bemerkungen</label>'
+    + '<textarea id="hs-notes" rows="2">' + x(hs && hs.notes ? hs.notes : '') + '</textarea></div>',
+    async function() {
+      var name = gv('hs-name');
+      if (!name) { toast('Name fehlt', 'error'); return false; }
+      var status = el('hs-status').value;
+      var now    = new Date().toISOString();
+      var fields = {
+        name:        name,
+        device_nr:   gv('hs-nr') || null,
+        notes:       el('hs-notes') ? el('hs-notes').value.trim() : '',
+        returned_at: status !== 'out' ? (hs && hs.returned_at ? hs.returned_at : now) : null,
+        returned_ok: status === 'ok' ? true : status === 'lost' ? false : null,
+      };
+      var client = getSB();
+      if (!client) { toast('Nicht verbunden', 'error'); return false; }
+      var res = hsId
+        ? await client.from('headsets').update(fields).eq('id', hsId)
+        : await client.from('headsets').insert(Object.assign({}, fields, { trip_id: TRIP_ID }));
+      if (res.error) throw res.error;
+      await loadHeadsets();
+    }
+  );
+};
 
-window.openHsModal = openHsModal;
-
-async function deleteHs(hsId) {
-  var hs = hsData.find(function(h){ return h.id===hsId; });
-  if (!confirm('Eintrag f&uuml;r "' + (hs?hs.name:'?') + '" l&ouml;schen?')) return;
+window.deleteHs = async function(hsId) {
+  var hs = hsData.find(function(h){ return h.id === hsId; });
+  if (!confirm('Eintrag f\u00fcr "' + (hs ? hs.name : '?') + '" l\u00f6schen?')) return;
   var res = await getSB().from('headsets').delete().eq('id', hsId);
-  if (res.error) { toast(res.error.message,'error'); return; }
-  await loadHeadsets(); toast('Gel&ouml;scht');
-}
-window.deleteHs = deleteHs;
+  if (res.error) { toast(res.error.message, 'error'); return; }
+  await loadHeadsets(); toast('Gel\u00f6scht');
+};
 
-async function importFromContacts() {
-  if (!data.contacts||!data.contacts.length) { toast('Keine Kontakte','error'); return; }
+window.importFromContacts = async function() {
+  if (!data.contacts || !data.contacts.length) { toast('Keine Kontakte', 'error'); return; }
   var existing = hsData.map(function(h){ return h.name.toLowerCase(); });
   var skip = ['notruf','polizei','hotel','carabinieri','theis','stadtf','fahrer','busunter'];
   var toImport = data.contacts.filter(function(c) {
-    var rl = (c.role||'').toLowerCase();
+    var rl = (c.role || '').toLowerCase();
     return !skip.some(function(s){ return rl.includes(s); })
       && !existing.includes(c.name.toLowerCase());
   });
-  if (!toImport.length) { toast('Alle Kontakte bereits erfasst'); return; }
-  var names = toImport.map(function(c){ return '  - '+c.name; }).join('\n');
-  if (!confirm(toImport.length+' Kontakt(e) importieren?\n\n'+names)) return;
+  if (!toImport.length) { toast('Alle bereits erfasst'); return; }
+  var names = toImport.map(function(c){ return '  - ' + c.name; }).join('\n');
+  if (!confirm(toImport.length + ' Kontakt(e) importieren?\n\n' + names)) return;
   var client = getSB();
-  if (!client) { toast('Nicht verbunden','error'); return; }
-  var rows = toImport.map(function(c,i){
-    return {trip_id:TRIP_ID, name:c.name, device_nr:'H-'+String(i+hsData.length+1).padStart(2,'0'), notes:''};
+  if (!client) { toast('Nicht verbunden', 'error'); return; }
+  var rows = toImport.map(function(c, i) {
+    return { trip_id: TRIP_ID, name: c.name, device_nr: 'H-' + String(i + hsData.length + 1).padStart(2,'0'), notes: '' };
   });
   var res = await client.from('headsets').insert(rows);
-  if (res.error) { toast(res.error.message,'error'); return; }
-  await loadHeadsets();
-  toast(toImport.length+' Kontakte importiert');
+  if (res.error) { toast(res.error.message, 'error'); return; }
+  await loadHeadsets(); toast(toImport.length + ' importiert');
+};
+
+function renderPublicHeadsets() {
+  var c = el('hs-pub-container');
+  if (!c) return;
+  if (!hsData.length) {
+    c.innerHTML = '<p style="color:var(--text-soft);font-size:.82rem;padding:8px 0">Noch keine Headsets ausgegeben.</p>';
+    return;
+  }
+  var pubSort = el('pub-hs-sort') ? el('pub-hs-sort').value : 'status';
+  var all = hsData.slice().sort(function(a, b) {
+    if (pubSort === 'nr') return parseInt((a.device_nr||'0').replace(/\D/g,'')||0) - parseInt((b.device_nr||'0').replace(/\D/g,'')||0);
+    if (pubSort === 'name') return lastName(a.name).localeCompare(lastName(b.name), 'de');
+    // status: Verlust→Ausgegeben→Zurück
+    var order = { lost:0, out:1, ok:2 };
+    return (order[hsStatus(a)] - order[hsStatus(b)]) || lastName(a.name).localeCompare(lastName(b.name), 'de');
+  });
+  var h = '<div class="hs-pub-header">'
+    + '<span style="font-size:.8rem;color:var(--text-soft)">' + hsData.length + ' Ger&auml;te</span>'
+    + '<div class="hs-pub-stats">'
+    + (out.length  ? '<span class="hs-pub-stat out">&#x1F7E1; ' + out.length + ' draussen</span>' : '')
+    + (back.length ? '<span class="hs-pub-stat back">&#x1F7E2; ' + back.length + ' zur&uuml;ck</span>' : '')
+    + (lost.length ? '<span class="hs-pub-stat lost">&#x1F534; ' + lost.length + ' Verlust</span>' : '')
+    + '</div></div>';
+  for (var i = 0; i < all.length; i++) {
+    var hs = all[i]; var sc = hsStatus(hs);
+    h += '<div class="hs-pub-row status-' + sc + '">'
+      + '<div class="hs-pub-device">' + x(hs.device_nr||'?') + '</div>'
+      + '<div class="hs-pub-name">' + x(hs.name) + '</div>'
+      + '<span class="hs-pub-badge ' + sc + '">' + HS_LABEL[sc] + '</span>'
+      + '</div>';
+  }
+  h += '<div class="hs-pub-notice"><span>&#x26A0;&#xFE0F;</span>'
+    + '<span>Bei Verlust oder Besch&auml;digung werden <strong>50 &euro;</strong> in Rechnung gestellt.</span></div>';
+  c.innerHTML = h;
 }
-window.importFromContacts = importFromContacts;
+
+function headsetInfoBanner() {
+  return '<div class="headset-info-banner"><div class="hib-icon">&#x1F3A7;</div>'
+    + '<div class="hib-text"><strong>Headset-Hinweis</strong>'
+    + 'Jeder Teilnehmer erh&auml;lt ein Headset f&uuml;r die Stadtf&uuml;hrungen. '
+    + 'Bitte gib das Ger&auml;t sorgf&auml;ltig zur&uuml;ck. '
+    + 'Bei Verlust oder Besch&auml;digung werden <strong>50 &euro;</strong> in Rechnung gestellt.'
+    + '</div></div>';
+}
 
 function headsetInfoBanner() {
   return '<div class="headset-info-banner"><div class="hib-icon">&#x1F3A7;</div>'

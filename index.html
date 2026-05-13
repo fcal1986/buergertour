@@ -1299,8 +1299,20 @@ html, body {
                 <span class="book-public-dot"></span>
                 <span id="book-pub-label">Nicht öffentlich</span>
               </button>
-              <button class="reader-icon-btn" id="book-edit-btn" onclick="window.bookToggleEdit()" title="Kapitel bearbeiten">
+              <!-- Public Toggle (nur Admin) -->
+              <button class="toggle-switch" id="book-pub-toggle" onclick="window.bookTogglePublic()" style="display:none;flex-shrink:0" title="Öffentlich / Versteckt"></button>
+              <span id="book-pub-badge" style="font-size:.8rem"></span>
+              <!-- Kapitel hinzufügen -->
+              <button class="reader-icon-btn" id="book-add-btn" onclick="window.bookAddChapter()" style="display:none" title="Neues Kapitel">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+              <!-- Bearbeiten -->
+              <button class="reader-icon-btn" id="book-edit-btn" onclick="window.bookToggleEdit()" style="display:none" title="Bearbeiten">
                 <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <!-- Löschen -->
+              <button class="reader-icon-btn" id="book-del-btn" onclick="window.bookDeleteChapter()" style="display:none;color:#dc2626" title="Kapitel löschen">
+                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
               </button>
               <button class="reader-icon-btn" id="book-settings-btn" onclick="window.bookToggleSettings()" title="Einstellungen">
                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -2950,126 +2962,107 @@ function headsetInfoBanner() {
 // ============================================================
 // BUCH-READER
 // ============================================================
-var bookChapters  = [];
-var bookIndex     = 0;
-var bookFontPx    = 16;
-var bookDark      = false;
-var bookEditMode  = false;
-var bookTocOpen   = false;
-var bookSetOpen   = false;
+var bookChapters = [];
+var bookIndex    = 0;
+var bookFontPx   = 16;
+var bookDark     = false;
+var bookEditMode = false;
+var bookTocOpen  = false;
+var bookSetOpen  = false;
 
-// ── Markdown → HTML (einfacher Parser) ──────────────────────
+// ── Markdown → HTML ─────────────────────────────────────────
 function bookMd(text) {
   if (!text) return '';
   var h = text
     // Tabellen
     .replace(/^\|(.+)\|\s*$/gm, function(line) {
-      var cells = line.split('|').slice(1,-1);
-      var isSep = cells.every(function(c){ return /^[-: ]+$/.test(c); });
-      if (isSep) return '';
-      var tag = '<td>';
-      return '<tr>' + cells.map(function(c){ return tag + c.trim() + '</td>'; }).join('') + '</tr>';
+      var cells = line.split('|').slice(1, -1);
+      if (cells.every(function(c){ return /^[-: ]+$/.test(c); })) return '';
+      return '<tr>' + cells.map(function(c){ return '<td>' + c.trim() + '</td>'; }).join('') + '</tr>';
     })
     .replace(/(<tr>.*<\/tr>\s*)+/g, function(m){ return '<table>' + m + '</table>'; })
-    // Überschriften
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/^## (.+)$/gm,  '<h2>$1</h2>')
     .replace(/^# (.+)$/gm,   '<h1>$1</h1>')
-    // Blockquotes
-    .replace(/^> (.+)$/gm, '<blockquote><p>$1</p></blockquote>')
-    // Bold / Italic
+    .replace(/^> (.+)$/gm,   '<blockquote><p>$1</p></blockquote>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g,     '<em>$1</em>')
-    // Listen
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/^- (.+)$/gm,    '<li>$1</li>')
     .replace(/(<li>.*<\/li>\s*)+/g, function(m){ return '<ul>' + m + '</ul>'; })
-    // HR
     .replace(/^---$/gm, '<hr>')
-    // Absätze: Leerzeilen → <p>
     .split(/\n\n+/)
     .map(function(block) {
       block = block.trim();
       if (!block) return '';
       if (/<(h[123]|ul|table|blockquote|hr)/.test(block)) return block;
       return '<p>' + block.replace(/\n/g, '<br>') + '</p>';
-    })
-    .join('\n');
+    }).join('\n');
   return h;
 }
 
-// ── Kapitel rendern ─────────────────────────────────────────
+// ── Kapitel rendern ──────────────────────────────────────────
 function bookRenderChapter() {
-  var c = bookChapters[bookIndex];
+  var c        = bookChapters[bookIndex];
+  var isAdmin  = !!adminState.session;
   if (!c) return;
 
-  // Toolbar-Titel
   el('book-toolbar-title').textContent = c.title;
 
-  // Part-Label
   var lbl = el('book-part-label');
   if (c.part_title) {
-    lbl.textContent = 'Teil ' + c.part_nr + ' · ' + c.part_title;
+    lbl.textContent  = 'Teil ' + c.part_nr + ' · ' + c.part_title;
     lbl.style.display = 'block';
-  } else {
-    lbl.style.display = 'none';
-  }
+  } else { lbl.style.display = 'none'; }
 
-  // Kapitel-Titel
   var chNum = c.chapter_nr > 0 ? 'Kapitel ' + c.chapter_nr + ' · ' : '';
   el('book-chapter-title').textContent = chNum + c.title;
 
-  // Inhalt
   if (!bookEditMode) {
     el('book-chapter-body').innerHTML = bookMd(c.content || '');
   }
 
-  // Fortschritt
   el('book-progress').textContent = (bookIndex + 1) + ' / ' + bookChapters.length;
-
-  // Nav-Buttons
   el('book-prev-btn').disabled = bookIndex === 0;
   el('book-next-btn').disabled = bookIndex === bookChapters.length - 1;
 
-  // Admin-Controls
-  var isAdmin = !!adminState.session;
-  var pubToggle = el('book-pub-toggle');
-  var addBtn    = el('book-add-btn');
-  var editBtn   = el('book-edit-btn');
-  if (pubToggle) {
-    pubToggle.style.display = isAdmin ? '' : 'none';
-    var isPub = c && c.is_public;
-    pubToggle.className = 'book-public-toggle ' + (isPub ? 'is-public' : 'not-public');
-    el('book-pub-label').textContent = isPub ? 'Öffentlich' : 'Nicht öffentlich';
-  }
-  if (addBtn)  addBtn.style.display  = isAdmin ? '' : 'none';
-  if (editBtn) editBtn.style.display = isAdmin ? '' : 'none';
-  // TOC-Badge: zeigt (privat) an bei nicht-öffentlichen Kapiteln für Admins
-  document.querySelectorAll('.toc-item').forEach(function(item, i) {
-    var ch = bookChapters[i];
-    var badge = item.querySelector('.toc-pub-badge');
-    if (badge) badge.textContent = (ch && !ch.is_public && isAdmin) ? ' 🔒' : '';
-  });
-
-  // Scroll to top
   var scroll = el('book-scroll');
   if (scroll) scroll.scrollTop = 0;
 
-  // Font-Size anwenden
   bookApplyFont();
 
-  // TOC aktiven Eintrag markieren
   document.querySelectorAll('.toc-item').forEach(function(item, i) {
     item.classList.toggle('active', i === bookIndex);
   });
+
+  // Public-Toggle und Add/Edit-Buttons nur für Admins zeigen
+  var pubToggle = el('book-pub-toggle');
+  var addBtn    = el('book-add-btn');
+  var editBtn   = el('book-edit-btn');
+  var delBtn    = el('book-del-btn');
+  if (pubToggle) {
+    pubToggle.style.display = isAdmin ? '' : 'none';
+    pubToggle.classList.toggle('on', !!(c && c.is_public));
+    pubToggle.title = c.is_public ? 'Öffentlich – klicken zum Verstecken' : 'Nicht öffentlich – klicken zum Veröffentlichen';
+  }
+  if (addBtn)  addBtn.style.display  = isAdmin ? '' : 'none';
+  if (editBtn) editBtn.style.display = isAdmin ? '' : 'none';
+  if (delBtn)  delBtn.style.display  = isAdmin ? '' : 'none';
+
+  // Lock-Icon im Toolbar-Titel
+  var badge = el('book-pub-badge');
+  if (badge) badge.textContent = (c && !c.is_public && isAdmin) ? ' 🔒' : '';
 }
 
-// ── TOC rendern ─────────────────────────────────────────────
+// ── TOC rendern ──────────────────────────────────────────────
 function bookRenderToc() {
-  var list = el('book-toc-list');
+  var list    = el('book-toc-list');
+  var isAdmin = !!adminState.session;
   if (!list) return;
   var lastPart = -1;
   var h = '';
   bookChapters.forEach(function(c, i) {
+    // Nicht-öffentliche Kapitel für Nicht-Admins ausblenden
+    if (!c.is_public && !isAdmin) return;
     if (c.part_nr !== lastPart) {
       if (c.part_title) {
         h += '<div class="toc-part-header">'
@@ -3081,17 +3074,26 @@ function bookRenderToc() {
     h += '<div class="toc-item' + (i === bookIndex ? ' active' : '')
       + '" onclick="window.bookGoTo(' + i + ')">'
       + '<span class="toc-num">' + (c.chapter_nr > 0 ? c.chapter_nr : '') + '</span>'
-      + '<span class="toc-label">' + x(c.title) + '</span>'
-      + (isAdmin && !c.is_public ? '<span class="toc-pub-badge" style="color:#d97706;font-size:.7rem"> 🔒</span>' : '')
-      + '</div>';
+      + '<span class="toc-label">' + x(c.title)
+      + (isAdmin && !c.is_public ? ' <span style="color:#d97706;font-size:.7rem">🔒</span>' : '')
+      + '</span></div>';
   });
-  list.innerHTML = h;
+  list.innerHTML = h || '<p style="color:var(--text-soft);padding:12px 0">Keine öffentlichen Kapitel.</p>';
 }
 
 // ── Navigation ───────────────────────────────────────────────
 window.bookNav = function(dir) {
-  bookIndex = Math.max(0, Math.min(bookChapters.length - 1, bookIndex + dir));
-  bookRenderChapter();
+  var isAdmin = !!adminState.session;
+  var newIndex = bookIndex + dir;
+  // Nicht-öffentliche Kapitel für Nicht-Admins überspringen
+  while (newIndex >= 0 && newIndex < bookChapters.length) {
+    if (bookChapters[newIndex].is_public || isAdmin) break;
+    newIndex += dir;
+  }
+  if (newIndex >= 0 && newIndex < bookChapters.length) {
+    bookIndex = newIndex;
+    bookRenderChapter();
+  }
 };
 
 window.bookGoTo = function(i) {
@@ -3124,10 +3126,7 @@ window.bookFontSize = function(delta) {
 
 function bookApplyFont() {
   var r = el('book-reader');
-  if (r) {
-    r.style.setProperty('--reader-font-size', bookFontPx + 'px');
-    el('book-chapter-title').style.fontSize = (bookFontPx * 1.4) + 'px';
-  }
+  if (r) r.style.setProperty('--reader-font-size', bookFontPx + 'px');
 }
 
 window.bookToggleDark = function() {
@@ -3138,18 +3137,82 @@ window.bookToggleDark = function() {
   if (t) t.classList.toggle('on', bookDark);
 };
 
+// ── Public Toggle ────────────────────────────────────────────
+window.bookTogglePublic = async function() {
+  var c = bookChapters[bookIndex];
+  if (!c || !adminState.session) return;
+  var newVal  = !c.is_public;
+  var client  = getSB();
+  if (!client) return;
+  var res = await client.from('book_chapters').update({ is_public: newVal }).eq('id', c.id);
+  if (res.error) { toast(res.error.message, 'error'); return; }
+  c.is_public = newVal;
+  toast(newVal ? 'Kapitel ist jetzt öffentlich ✓' : 'Kapitel versteckt 🔒');
+  bookRenderChapter();
+  bookRenderToc();
+};
+
+// ── Kapitel hinzufügen ───────────────────────────────────────
+window.bookAddChapter = function() {
+  var maxSort = bookChapters.reduce(function(m, c){ return Math.max(m, c.sort_order||0); }, 0);
+  openModal('Neues Kapitel',
+    '<div class="field-group"><label>Titel *</label><input type="text" id="bc-title" placeholder="z.B. Ankunft in Catania" /></div>'
+    + '<div class="field-group"><label>Teil-Nr. (0 = kein Teil)</label><input type="number" id="bc-part-nr" value="0" min="0" /></div>'
+    + '<div class="field-group"><label>Teil-Titel (optional)</label><input type="text" id="bc-part-title" placeholder="z.B. Sizilien – Die Seele des Mittelmeers" /></div>'
+    + '<div class="field-group"><label>Kapitel-Nr. (0 = kein Nummer)</label><input type="number" id="bc-ch-nr" value="0" min="0" /></div>'
+    + '<div class="field-group"><label>Inhalt (Markdown)</label><textarea id="bc-content" rows="6" placeholder="Ihr Text hier..."></textarea></div>',
+    async function() {
+      var title = gv('bc-title');
+      if (!title) { toast('Titel fehlt', 'error'); return false; }
+      var client = getSB();
+      if (!client) { toast('Nicht verbunden', 'error'); return false; }
+      var fields = {
+        trip_id:    TRIP_ID,
+        title:      title,
+        part_nr:    parseInt(el('bc-part-nr').value) || 0,
+        part_title: el('bc-part-title') ? el('bc-part-title').value.trim() : '',
+        chapter_nr: parseInt(el('bc-ch-nr').value) || 0,
+        content:    el('bc-content') ? el('bc-content').value : '',
+        sort_order: maxSort + 1,
+        is_public:  false,
+      };
+      var res = await client.from('book_chapters').insert(fields);
+      if (res.error) throw res.error;
+      await loadBookChapters();
+      bookIndex = bookChapters.length - 1;
+      bookRenderChapter();
+      toast('Kapitel hinzugefügt ✓');
+    }
+  );
+};
+
+// ── Kapitel löschen ──────────────────────────────────────────
+window.bookDeleteChapter = async function() {
+  var c = bookChapters[bookIndex];
+  if (!c) return;
+  if (!confirm('Kapitel "' + c.title + '" wirklich löschen?')) return;
+  var client = getSB();
+  if (!client) return;
+  var res = await client.from('book_chapters').delete().eq('id', c.id);
+  if (res.error) { toast(res.error.message, 'error'); return; }
+  await loadBookChapters();
+  bookIndex = Math.max(0, bookIndex - 1);
+  bookRenderChapter();
+  toast('Kapitel gelöscht');
+};
+
 // ── Edit-Modus ───────────────────────────────────────────────
 window.bookToggleEdit = function() {
   if (!adminState.session) { toast('Nur für Admins', 'error'); return; }
   bookEditMode = !bookEditMode;
-  var c = bookChapters[bookIndex];
+  var c        = bookChapters[bookIndex];
   var editBar  = el('book-edit-bar');
   var editArea = el('book-edit-textarea');
   var scroll   = el('book-scroll');
   var editBtn  = el('book-edit-btn');
   if (bookEditMode) {
     editBar.style.display  = 'flex';
-    editArea.style.display = 'block';
+    editArea.style.display = 'flex';
     scroll.style.display   = 'none';
     editArea.value = c ? (c.content || '') : '';
     editArea.focus();
@@ -3164,90 +3227,18 @@ window.bookToggleEdit = function() {
 
 window.bookCancelEdit = function() {
   bookEditMode = false;
-  window.bookToggleEdit();
-  bookEditMode = false;
-  el('book-edit-bar').style.display  = 'none';
+  el('book-edit-bar').style.display      = 'none';
   el('book-edit-textarea').style.display = 'none';
-  el('book-scroll').style.display   = '';
-  el('book-edit-btn').style.background = '';
-};
-
-// ── Public/Private Toggle ─────────────────────────────────
-window.bookTogglePublic = async function() {
-  var c = bookChapters[bookIndex];
-  if (!c || !adminState.session) return;
-  var newVal = !c.is_public;
-  var client = getSB();
-  if (!client) return;
-  var res = await client.from('book_chapters')
-    .update({ is_public: newVal })
-    .eq('id', c.id);
-  if (res.error) { toast(res.error.message, 'error'); return; }
-  c.is_public = newVal;
-  bookRenderChapter();
-  bookRenderToc();
-  toast(newVal ? 'Kapitel ist jetzt öffentlich ✓' : 'Kapitel ist jetzt privat 🔒');
-  DB.log('Kapitel ' + (newVal ? 'öffentlich' : 'privat') + ': ' + c.title, 'ok');
-};
-
-// ── Neues Kapitel anlegen ──────────────────────────────────
-window.bookNewChapter = function() {
-  if (!adminState.session) return;
-  var lastCh = bookChapters[bookChapters.length - 1];
-  var newSortOrder = lastCh ? lastCh.sort_order + 1 : 1;
-  openModal('Neues Kapitel',
-    '<div class="field-group"><label>Titel <span class="required">*</span></label>'
-    + '<input type="text" id="nc-title" placeholder="z.B. Exkurs: Die Mafia-Legende" /></div>'
-    + '<div class="field-group"><label>Teil-Nr. (0 = kein Teil)</label>'
-    + '<input type="number" id="nc-part" value="0" min="0" /></div>'
-    + '<div class="field-group"><label>Teil-Titel (optional)</label>'
-    + '<input type="text" id="nc-part-title" placeholder="z.B. Exkurse" /></div>'
-    + '<div class="field-group"><label>Kapitel-Nr. (0 = unnummeriert)</label>'
-    + '<input type="number" id="nc-chapter" value="0" min="0" /></div>',
-    async function() {
-      var title = gv('nc-title');
-      if (!title) { toast('Titel fehlt', 'error'); return false; }
-      var client = getSB();
-      if (!client) return false;
-      var res = await client.from('book_chapters').insert({
-        trip_id:     TRIP_ID,
-        title:       title,
-        part_nr:     parseInt(gv('nc-part') || '0'),
-        part_title:  gv('nc-part-title') || '',
-        chapter_nr:  parseInt(gv('nc-chapter') || '0'),
-        content:     '',
-        sort_order:  newSortOrder,
-        is_public:   false,
-      }).select();
-      if (res.error) throw res.error;
-      await loadBookChapters();
-      // Zum neuen Kapitel springen
-      bookIndex = bookChapters.length - 1;
-      bookRenderChapter();
-      toast('Kapitel angelegt – jetzt bearbeiten ✓');
-    }
-  );
-};
-
-// ── Kapitel löschen ────────────────────────────────────────
-window.bookDeleteChapter = async function() {
-  var c = bookChapters[bookIndex];
-  if (!c) return;
-  if (!confirm('Kapitel "' + c.title + '" wirklich löschen?')) return;
-  var client = getSB();
-  if (!client) return;
-  var res = await client.from('book_chapters').delete().eq('id', c.id);
-  if (res.error) { toast(res.error.message, 'error'); return; }
-  bookIndex = Math.max(0, bookIndex - 1);
-  await loadBookChapters();
-  toast('Kapitel gelöscht');
+  el('book-scroll').style.display        = '';
+  var editBtn = el('book-edit-btn');
+  if (editBtn) editBtn.style.background  = '';
 };
 
 window.bookSaveChapter = async function() {
   var c = bookChapters[bookIndex];
   if (!c) return;
   var newContent = el('book-edit-textarea').value;
-  var client = getSB();
+  var client     = getSB();
   if (!client) { toast('Nicht verbunden', 'error'); return; }
   var res = await client.from('book_chapters')
     .update({ content: newContent, updated_at: new Date().toISOString() })
@@ -3256,7 +3247,7 @@ window.bookSaveChapter = async function() {
   c.content = newContent;
   window.bookCancelEdit();
   bookRenderChapter();
-  toast('Kapitel gespeichert ✓');
+  toast('Gespeichert ✓');
   DB.log('Kapitel gespeichert: ' + c.title, 'ok');
 };
 
@@ -3265,22 +3256,16 @@ async function loadBookChapters() {
   var client = getSB();
   if (!client) return;
   try {
-    // Admin sieht alle Kapitel, Public nur freigegebene
-    var query = client.from('book_chapters')
-      .select('*')
-      .eq('trip_id', TRIP_ID)
-      .order('sort_order');
-    if (!adminState.session) query = query.eq('is_public', true);
-    var res = await query;
+    var res = await client.from('book_chapters')
+      .select('*').eq('trip_id', TRIP_ID).order('sort_order');
     if (res.error) throw res.error;
     bookChapters = res.data || [];
     if (bookChapters.length) bookRenderChapter();
-    else el('book-chapter-title').textContent = 'Keine Kapitel vorhanden.';
-    DB.log('Buch geladen: ' + bookChapters.length + ' Kapitel', 'ok');
+    else el('book-chapter-title').textContent = 'Keine Kapitel – Kapitel hinzufügen ↑';
+    DB.log('Buch: ' + bookChapters.length + ' Kapitel', 'ok');
   } catch(e) { DB.log('Buch FEHLER: ' + e.message, 'error'); }
 }
 
-// Schließe Popups bei Klick außerhalb
 document.addEventListener('click', function(e) {
   if (bookSetOpen && !e.target.closest('#book-settings-popup') && !e.target.closest('#book-settings-btn')) {
     el('book-settings-popup').style.display = 'none';

@@ -3283,42 +3283,36 @@ window.bookDeleteChapter = async function() {
 window.bookToggleEdit = function() {
   if (!adminState.session) { toast('Nur für Admins', 'error'); return; }
   bookEditMode = !bookEditMode;
-  var c        = bookChapters[bookIndex];
-  var editBar  = el('book-edit-bar');
-  var editArea = el('book-edit-textarea');
-  var scroll   = el('book-scroll');
-  var editBtn  = el('book-edit-btn');
+  var c = bookChapters[bookIndex];
   if (bookEditMode) {
-    editBar.style.display  = 'flex';
-    editArea.style.display = 'flex';
-    scroll.style.display   = 'none';
-    // Inject title input into edit bar
-    var titleInput = el('book-edit-title');
-    if (!titleInput) {
-      var ti = document.createElement('input');
-      ti.type = 'text'; ti.id = 'book-edit-title';
-      ti.style.cssText = 'flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-family:Inter,sans-serif;font-size:.85rem;margin-right:6px';
-      editBar.insertBefore(ti, editBar.firstChild);
-    }
-    el('book-edit-title').value = c ? (c.title || '') : '';
-    editArea.value = c ? (c.content || '') : '';
-    editArea.focus();
-    editBtn.style.background = 'var(--blue-soft)';
+    // Neue HTML-Struktur: book-toolbar-read/edit tauschen
+    el('book-toolbar-read').style.display  = 'none';
+    el('book-toolbar-edit').style.display  = 'block';
+    el('book-scroll').style.display        = 'none';
+    el('book-edit-textarea').style.display = 'flex';
+    var nav = document.querySelector('#book-reader .reader-nav');
+    if (nav) nav.style.display = 'none';
+    var ti = el('book-edit-title');
+    if (ti) ti.value = c ? (c.title || '') : '';
+    el('book-edit-textarea').value = c ? (c.content || '') : '';
+    el('book-edit-textarea').focus();
   } else {
-    editBar.style.display  = 'none';
-    editArea.style.display = 'none';
-    scroll.style.display   = '';
-    editBtn.style.background = '';
+    window.bookCancelEdit();
   }
 };
 
 window.bookCancelEdit = function() {
   bookEditMode = false;
-  el('book-edit-bar').style.display      = 'none';
-  el('book-edit-textarea').style.display = 'none';
-  el('book-scroll').style.display        = '';
-  var editBtn = el('book-edit-btn');
-  if (editBtn) editBtn.style.background  = '';
+  var read = el('book-toolbar-read');
+  var edit = el('book-toolbar-edit');
+  var area = el('book-edit-textarea');
+  var scroll = el('book-scroll');
+  if (read)  read.style.display  = '';
+  if (edit)  edit.style.display  = 'none';
+  if (area)  area.style.display  = 'none';
+  if (scroll) scroll.style.display = '';
+  var nav = document.querySelector('#book-reader .reader-nav');
+  if (nav) nav.style.display = '';
 };
 
 window.bookSaveChapter = async function() {

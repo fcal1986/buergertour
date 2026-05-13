@@ -863,7 +863,7 @@ html, body {
     <section id="view-contacts" class="view">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <div class="section-title" style="margin-bottom:0">Kontakte</div>
-        <select class="hs-sort-select" id="contacts-sort" onchange="renderContacts()">
+        <select class="hs-sort-select" id="contacts-sort" onchange="window.renderContacts()">
           <option value="default">Originalreihenfolge</option>
           <option value="name">Nachname A&#x2013;Z</option>
         </select>
@@ -894,7 +894,7 @@ html, body {
     <section id="view-headsets" class="view">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div class="section-title" style="margin-bottom:0">Headsets</div>
-        <select class="hs-sort-select" id="pub-hs-sort" onchange="renderPublicHeadsets()" style="margin-left:8px">
+        <select class="hs-sort-select" id="pub-hs-sort" onchange="window.renderPublicHeadsets()" style="margin-left:8px">
           <option value="status">Status (Verlust zuerst)</option>
           <option value="name">Nachname A&#x2013;Z</option>
           <option value="nr">Ger&auml;te-Nr.</option>
@@ -1913,6 +1913,7 @@ function renderContacts() {
   }
   c.innerHTML = h;
 }
+window.renderContacts = renderContacts;
 
 // ============================================================
 // RENDER – ADMIN DATA LISTS
@@ -2521,6 +2522,7 @@ function renderPublicHeadsets() {
     + '<span>Bei Verlust oder Besch&auml;digung werden <strong>50 &euro;</strong> in Rechnung gestellt.</span></div>';
   c.innerHTML = h;
 }
+window.renderPublicHeadsets = renderPublicHeadsets;
 
 async function loadHeadsets() {
   var client = getSB();

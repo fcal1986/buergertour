@@ -766,6 +766,28 @@ html, body {
 }
 .hs-search:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.08); }
 .hs-count { font-size: .74rem; color: var(--text-soft); padding: 4px 0 8px; }
+
+/* ── HEADSET ALPHA-GRUPPE ── */
+.hs-alpha-group { margin-bottom: 4px; }
+.hs-alpha-header {
+  font-size: .65rem; font-weight: 700; color: var(--text-soft);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  padding: 10px 4px 4px; border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+/* Quick-Status Toggle */
+.hs-status-toggle {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .68rem; font-weight: 600; padding: 4px 10px;
+  border-radius: 20px; flex-shrink: 0; white-space: nowrap;
+  cursor: pointer; border: none; transition: opacity .15s, transform .12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.hs-status-toggle:active { transform: scale(.95); opacity: .85; }
+.hs-status-toggle.out  { background: #fef3c7; color: #92400e; }
+.hs-status-toggle.ok   { background: #dcfce7; color: #166534; }
+.hs-status-toggle.lost { background: #fee2e2; color: #991b1b; }
+.hs-status-toggle::after { content: ' &#9660;'; font-size: .55rem; opacity: .6; }
 </style>
 </head>
 <body>
@@ -2265,23 +2287,21 @@ async function loadHeadsets() {
 }
 
 
-// ── HEADSET FILTER / SORT ────────────────────────────────────────────────────
+// ── HEADSET FILTER / SORT / ALPHA ───────────────────────────────────────────
 var hsFilter = 'all';
 
-function setHsFilter(f) {
+window.setHsFilter = function(f) {
   hsFilter = f;
   document.querySelectorAll('.hs-filter-btn').forEach(function(b) {
     b.classList.toggle('active', b.dataset.filter === f);
   });
   filterHeadsets();
-}
-window.setHsFilter = setHsFilter;
+};
 
-function filterHeadsets() {
+window.filterHeadsets = function() {
   var search = (el('hs-search') ? el('hs-search').value.toLowerCase() : '');
-  var sort   = el('hs-sort') ? el('hs-sort').value : 'nr';
+  var sort   = el('hs-sort')   ? el('hs-sort').value   : 'name';
 
-  // 1. Filter nach Status
   var filtered = hsData.filter(function(h) {
     if (hsFilter === 'out')  return !h.returned_at;
     if (hsFilter === 'ok')   return h.returned_at && h.returned_ok !== false;
@@ -2289,63 +2309,119 @@ function filterHeadsets() {
     return true;
   });
 
-  // 2. Suche nach Name
   if (search) {
     filtered = filtered.filter(function(h) {
       return h.name.toLowerCase().includes(search)
-        || (h.device_nr||'').toLowerCase().includes(search);
+          || (h.device_nr||'').toLowerCase().includes(search);
     });
   }
 
-  // 3. Sortierung
   filtered.sort(function(a, b) {
-    if (sort === 'name') {
-      return a.name.localeCompare(b.name, 'de');
+    if (sort === 'nr') {
+      var na = parseInt((a.device_nr||'').replace(/\D/g,'') || '0');
+      var nb = parseInt((b.device_nr||'').replace(/\D/g,'') || '0');
+      return na - nb;
     }
     if (sort === 'status') {
-      var order = { out: 0, lost: 1, ok: 2 };
-      var sa = !a.returned_at ? 'out' : a.returned_ok === false ? 'lost' : 'ok';
-      var sb = !b.returned_at ? 'out' : b.returned_ok === false ? 'lost' : 'ok';
-      return (order[sa] - order[sb]) || a.name.localeCompare(b.name, 'de');
+      var order = { out:0, lost:1, ok:2 };
+      var sa = !a.returned_at ? 'out' : a.returned_ok===false ? 'lost' : 'ok';
+      var sb = !b.returned_at ? 'out' : b.returned_ok===false ? 'lost' : 'ok';
+      return (order[sa]-order[sb]) || a.name.localeCompare(b.name,'de');
     }
-    // Default: Geräte-Nr
-    var na = (a.device_nr||'').replace(/\D/g,'');
-    var nb = (b.device_nr||'').replace(/\D/g,'');
-    return parseInt(na||'0') - parseInt(nb||'0');
+    // name (default) – nach Nachname sortieren
+    return lastName(a.name).localeCompare(lastName(b.name), 'de');
   });
 
-  // 4. Zähler
   var cnt = el('hs-count');
-  if (cnt) cnt.textContent = filtered.length + ' von ' + hsData.length + ' Einträgen';
+  if (cnt) cnt.textContent = filtered.length + ' von ' + hsData.length + ' Eintraegen';
 
-  // 5. Rendern
-  var list = el('hs-list');
-  if (!list) return;
-  if (!filtered.length) {
-    list.innerHTML = '<p class="preview-text">Keine Einträge für diese Auswahl.</p>';
+  renderHsList(filtered, sort === 'name');
+};
+// alias für backward-compat
+function filterHeadsets() { window.filterHeadsets(); }
+
+// Nachname extrahieren (letztes Wort, ignoriert "Dr.", "Gen.")
+function lastName(name) {
+  var parts = name.replace(/^(Dr\.?|Prof\.?|Gen\.?)\s+/i,'').trim().split(/\s+/);
+  return parts[parts.length-1] || name;
+}
+
+function renderHsList(list, groupByAlpha) {
+  var container = el('hs-list');
+  if (!container) return;
+  if (!list.length) {
+    container.innerHTML = '<p class="preview-text">Keine Eintr&auml;ge f&uuml;r diese Auswahl.</p>';
     return;
   }
-  var h = '';
-  for (var i = 0; i < filtered.length; i++) {
-    var hs = filtered[i];
+
+  function rowHtml(hs) {
     var sc, sl;
     if (!hs.returned_at)             { sc='out';  sl='&#x1F7E1; Ausgegeben'; }
-    else if (hs.returned_ok===false) { sc='lost'; sl='&#x1F534; Verlust / Schaden'; }
-    else                             { sc='ok';   sl='&#x1F7E2; Zur&uuml;ck &#x2713;'; }
-    h += '<div class="headset-row">'
+    else if (hs.returned_ok===false) { sc='lost'; sl='&#x1F534; Verlust'; }
+    else                             { sc='ok';   sl='&#x1F7E2; Zur&uuml;ck'; }
+    // Nächster Status beim Klick: out→ok, ok→lost, lost→out
+    var nextStatus = sc==='out' ? 'ok' : sc==='ok' ? 'lost' : 'out';
+    return '<div class="headset-row">'
       + '<div class="hs-device">' + x(hs.device_nr||'?') + '</div>'
       + '<div style="flex:1;min-width:0"><div class="hs-name">' + x(hs.name) + '</div>'
-      + (hs.notes ? '<div class="hs-notes">' + x(hs.notes) + '</div>' : '') + '</div>'
-      + '<span class="hs-status ' + sc + '">' + sl + '</span>'
+      + (hs.notes ? '<div class="hs-notes">' + x(hs.notes) + '</div>' : '')
+      + '</div>'
+      + '<button class="hs-status-toggle ' + sc + '" onclick="cycleHsStatus(&#39;' + hs.id + '&#39;)">'
+      + sl + '</button>'
       + '<div class="hs-actions">'
       + '<button class="btn-sm btn-sm-outline" onclick="openHsModal(&#39;' + hs.id + '&#39;)">&#x270F;</button>'
       + '<button class="btn-sm btn-sm-danger"  onclick="deleteHs(&#39;' + hs.id + '&#39;)">&#x1F5D1;</button>'
       + '</div></div>';
   }
-  list.innerHTML = h;
+
+  var h = '';
+  if (groupByAlpha) {
+    var lastLetter = '';
+    for (var i = 0; i < list.length; i++) {
+      var hs = list[i];
+      var letter = lastName(hs.name).charAt(0).toUpperCase();
+      if (letter !== lastLetter) {
+        if (lastLetter) h += '</div>';
+        h += '<div class="hs-alpha-group"><div class="hs-alpha-header">' + letter + '</div>';
+        lastLetter = letter;
+      }
+      h += rowHtml(hs);
+    }
+    if (lastLetter) h += '</div>';
+  } else {
+    for (var j = 0; j < list.length; j++) h += rowHtml(list[j]);
+  }
+  container.innerHTML = h;
 }
 
+// Schnell-Status-Wechsel per Klick: out → ok → lost → out
+window.cycleHsStatus = async function(hsId) {
+  var hs = hsData.find(function(h){ return h.id===hsId; });
+  if (!hs) return;
+  var now = new Date().toISOString();
+  var fields;
+  if (!hs.returned_at) {
+    // Ausgegeben → Zurück
+    fields = { returned_at: now, returned_ok: true };
+  } else if (hs.returned_ok !== false) {
+    // Zurück → Verlust
+    fields = { returned_at: hs.returned_at, returned_ok: false };
+  } else {
+    // Verlust → Ausgegeben (reset)
+    fields = { returned_at: null, returned_ok: null };
+  }
+  var client = getSB();
+  if (!client) return;
+  var res = await client.from('headsets').update(fields).eq('id', hsId);
+  if (res.error) { toast(res.error.message, 'error'); return; }
+  // Lokal updaten ohne vollen Reload für flüssiges Scroll-Erlebnis
+  Object.assign(hs, fields);
+  renderHeadsets(); // summary updaten
+  filterHeadsets(); // liste neu filtern/rendern
+};
+
 function renderHeadsets() {
+  // Summary Stats
   var total = hsData.length;
   var out   = hsData.filter(function(h){ return !h.returned_at; }).length;
   var back  = hsData.filter(function(h){ return h.returned_at && h.returned_ok !== false; }).length;
@@ -2356,94 +2432,10 @@ function renderHeadsets() {
     + '<div class="hs-stat hs-out"><div class="hs-num">' + out + '</div><div class="hs-lbl">Ausgegeben</div></div>'
     + '<div class="hs-stat hs-back"><div class="hs-num">' + back + '</div><div class="hs-lbl">Zur&uuml;ck</div></div>'
     + '<div class="hs-stat hs-lost"><div class="hs-num">' + lost + '</div><div class="hs-lbl">Verlust</div></div>';
-  // Delegiert an filterHeadsets() damit Filter/Sort aktiv bleiben
+  // Liste
   filterHeadsets();
 }
 
-function openHsModal(hsId) {
-  var hs = hsId ? hsData.find(function(h){ return h.id===hsId; }) : null;
-  var isOut  = !hs || !hs.returned_at;
-  var isOk   = hs && hs.returned_at && hs.returned_ok !== false;
-  var isLost = hs && hs.returned_at && hs.returned_ok === false;
-  openModal(hsId ? 'Headset bearbeiten' : 'Headset ausgeben',
-    '<div class="field-group"><label>Name <span class="required">*</span></label>'
-    + '<input type="text" id="hs-name" value="' + x(hs?hs.name:'') + '" placeholder="Vor- und Nachname" /></div>'
-    + '<div class="field-group"><label>Ger&auml;te-Nr.</label>'
-    + '<input type="text" id="hs-nr" value="' + x(hs&&hs.device_nr?hs.device_nr:'') + '" placeholder="z.B. H-01" /></div>'
-    + '<div class="field-group"><label>Status</label><select id="hs-status">'
-    + '<option value="out"'  + (isOut  ?' selected':'') + '>Ausgegeben (noch nicht zur&uuml;ck)</option>'
-    + '<option value="ok"'   + (isOk   ?' selected':'') + '>Zur&uuml;ck &#x2713; &ndash; sorgf&auml;ltig</option>'
-    + '<option value="lost"' + (isLost ?' selected':'') + '>Verlust / Schaden &ndash; 50 &euro;</option>'
-    + '</select></div>'
-    + '<div class="field-group"><label>Bemerkungen</label>'
-    + '<textarea id="hs-notes" rows="2" placeholder="z.B. Kratzer am Gehaeuse">' + x(hs&&hs.notes?hs.notes:'') + '</textarea></div>',
-    async function() {
-      var name = gv('hs-name');
-      if (!name) { toast('Name fehlt','error'); return false; }
-      var status = el('hs-status').value;
-      var now = new Date().toISOString();
-      var fields = {
-        name:        name,
-        device_nr:   gv('hs-nr') || null,
-        notes:       el('hs-notes') ? el('hs-notes').value.trim() : '',
-        returned_at: status!=='out' ? (hs&&hs.returned_at?hs.returned_at:now) : null,
-        returned_ok: status==='ok' ? true : status==='lost' ? false : null,
-      };
-      var client = getSB();
-      if (!client) { toast('Nicht verbunden','error'); return false; }
-      var res = hsId
-        ? await client.from('headsets').update(fields).eq('id', hsId)
-        : await client.from('headsets').insert(Object.assign({}, fields, {trip_id: TRIP_ID}));
-      if (res.error) throw res.error;
-      await loadHeadsets();
-    }
-  );
-}
-
-function renderPublicHeadsets() {
-  var c = el('hs-pub-container');
-  if (!c) return;
-
-  if (!hsData.length) {
-    c.innerHTML = '<p style="color:var(--text-soft);font-size:.82rem;padding:8px 0">Noch keine Headsets ausgegeben.</p>';
-    return;
-  }
-
-  var out  = hsData.filter(function(h){ return !h.returned_at; });
-  var back = hsData.filter(function(h){ return h.returned_at && h.returned_ok !== false; });
-  var lost = hsData.filter(function(h){ return h.returned_at && h.returned_ok === false; });
-
-  // Reihenfolge: Verlust oben, dann Ausgegeben, dann Zurück
-  var sorted = lost.concat(out).concat(back);
-
-  var h = '<div class="hs-pub-header">'
-    + '<span style="font-size:.8rem;color:var(--text-soft)">' + hsData.length + ' Ger&auml;te vergeben</span>'
-    + '<div class="hs-pub-stats">'
-    + (out.length  ? '<span class="hs-pub-stat out">&#x1F7E1; ' + out.length  + ' draussen</span>' : '')
-    + (back.length ? '<span class="hs-pub-stat back">&#x1F7E2; ' + back.length + ' zur&uuml;ck</span>' : '')
-    + (lost.length ? '<span class="hs-pub-stat lost">&#x1F534; ' + lost.length + ' Verlust</span>' : '')
-    + '</div></div>';
-
-  for (var i = 0; i < sorted.length; i++) {
-    var hs = sorted[i];
-    var sc, sl;
-    if (!hs.returned_at)             { sc='out';  sl='Ausgegeben'; }
-    else if (hs.returned_ok===false) { sc='lost'; sl='Verlust / Schaden'; }
-    else                             { sc='ok';   sl='Zur&uuml;ck &#x2713;'; }
-    h += '<div class="hs-pub-row status-' + sc + '">'
-      + '<div class="hs-pub-device">' + x(hs.device_nr||'?') + '</div>'
-      + '<div class="hs-pub-name">' + x(hs.name) + '</div>'
-      + '<span class="hs-pub-badge ' + sc + '">' + sl + '</span>'
-      + '</div>';
-  }
-
-  h += '<div class="hs-pub-notice">'
-    + '<span>&#x26A0;&#xFE0F;</span>'
-    + '<span>Bei Verlust oder Besch&auml;digung des Headsets werden <strong>50 &euro;</strong> in Rechnung gestellt.</span>'
-    + '</div>';
-
-  c.innerHTML = h;
-}
 
 window.openHsModal = openHsModal;
 

@@ -737,6 +737,35 @@ html, body {
   font-size: .8rem; color: #7c2d12; line-height: 1.5;
   margin-top: 12px; display: flex; gap: 9px; align-items: flex-start;
 }
+
+/* ── HEADSET FILTER / SORT ── */
+.hs-filter-bar {
+  display: flex; gap: 6px; margin-bottom: 12px;
+  flex-wrap: wrap; align-items: center;
+}
+.hs-filter-btn {
+  padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--surface); font-family: 'Inter', sans-serif;
+  font-size: .72rem; font-weight: 500; color: var(--text-soft);
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.hs-filter-btn.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+.hs-filter-btn:active  { transform: scale(.96); }
+.hs-sort-select {
+  padding: 6px 10px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--surface); font-family: 'Inter', sans-serif;
+  font-size: .72rem; font-weight: 500; color: var(--text-soft);
+  outline: none; cursor: pointer; margin-left: auto;
+}
+.hs-search {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+  border-radius: 8px; font-family: 'Inter', sans-serif; font-size: .85rem;
+  color: var(--text); outline: none; transition: border-color .18s;
+  background: var(--surface); margin-bottom: 10px;
+}
+.hs-search:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.08); }
+.hs-count { font-size: .74rem; color: var(--text-soft); padding: 4px 0 8px; }
 </style>
 </head>
 <body>
@@ -1002,6 +1031,20 @@ html, body {
               Aus Kontakten
             </button>
           </div>
+          <!-- Filter & Suche -->
+          <input type="text" class="hs-search" id="hs-search" placeholder="&#x1F50D; Name suchen..." oninput="filterHeadsets()" />
+          <div class="hs-filter-bar">
+            <button class="hs-filter-btn active" data-filter="all"  onclick="setHsFilter('all')">Alle</button>
+            <button class="hs-filter-btn"        data-filter="out"  onclick="setHsFilter('out')">&#x1F7E1; Ausgegeben</button>
+            <button class="hs-filter-btn"        data-filter="ok"   onclick="setHsFilter('ok')">&#x1F7E2; Zur&uuml;ck</button>
+            <button class="hs-filter-btn"        data-filter="lost" onclick="setHsFilter('lost')">&#x1F534; Verlust</button>
+            <select class="hs-sort-select" id="hs-sort" onchange="filterHeadsets()">
+              <option value="nr">Ger.-Nr.</option>
+              <option value="name">Name A–Z</option>
+              <option value="status">Status</option>
+            </select>
+          </div>
+          <div class="hs-count" id="hs-count"></div>
           <div id="hs-list"></div>
         </div>
 
@@ -2221,23 +2264,70 @@ async function loadHeadsets() {
   } catch(e) { DB.log('Headsets FEHLER: ' + e.message, 'error'); }
 }
 
-function renderHeadsets() {
-  var total = hsData.length;
-  var out   = hsData.filter(function(h){ return !h.returned_at; }).length;
-  var back  = hsData.filter(function(h){ return h.returned_at && h.returned_ok !== false; }).length;
-  var lost  = hsData.filter(function(h){ return h.returned_at && h.returned_ok === false; }).length;
-  var sum = el('hs-summary');
-  if (sum) sum.innerHTML =
-    '<div class="hs-stat hs-total"><div class="hs-num">' + total + '</div><div class="hs-lbl">Gesamt</div></div>'
-    + '<div class="hs-stat hs-out"><div class="hs-num">' + out + '</div><div class="hs-lbl">Ausgegeben</div></div>'
-    + '<div class="hs-stat hs-back"><div class="hs-num">' + back + '</div><div class="hs-lbl">Zur&uuml;ck</div></div>'
-    + '<div class="hs-stat hs-lost"><div class="hs-num">' + lost + '</div><div class="hs-lbl">Verlust</div></div>';
+
+// ── HEADSET FILTER / SORT ────────────────────────────────────────────────────
+var hsFilter = 'all';
+
+function setHsFilter(f) {
+  hsFilter = f;
+  document.querySelectorAll('.hs-filter-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.filter === f);
+  });
+  filterHeadsets();
+}
+window.setHsFilter = setHsFilter;
+
+function filterHeadsets() {
+  var search = (el('hs-search') ? el('hs-search').value.toLowerCase() : '');
+  var sort   = el('hs-sort') ? el('hs-sort').value : 'nr';
+
+  // 1. Filter nach Status
+  var filtered = hsData.filter(function(h) {
+    if (hsFilter === 'out')  return !h.returned_at;
+    if (hsFilter === 'ok')   return h.returned_at && h.returned_ok !== false;
+    if (hsFilter === 'lost') return h.returned_at && h.returned_ok === false;
+    return true;
+  });
+
+  // 2. Suche nach Name
+  if (search) {
+    filtered = filtered.filter(function(h) {
+      return h.name.toLowerCase().includes(search)
+        || (h.device_nr||'').toLowerCase().includes(search);
+    });
+  }
+
+  // 3. Sortierung
+  filtered.sort(function(a, b) {
+    if (sort === 'name') {
+      return a.name.localeCompare(b.name, 'de');
+    }
+    if (sort === 'status') {
+      var order = { out: 0, lost: 1, ok: 2 };
+      var sa = !a.returned_at ? 'out' : a.returned_ok === false ? 'lost' : 'ok';
+      var sb = !b.returned_at ? 'out' : b.returned_ok === false ? 'lost' : 'ok';
+      return (order[sa] - order[sb]) || a.name.localeCompare(b.name, 'de');
+    }
+    // Default: Geräte-Nr
+    var na = (a.device_nr||'').replace(/\D/g,'');
+    var nb = (b.device_nr||'').replace(/\D/g,'');
+    return parseInt(na||'0') - parseInt(nb||'0');
+  });
+
+  // 4. Zähler
+  var cnt = el('hs-count');
+  if (cnt) cnt.textContent = filtered.length + ' von ' + hsData.length + ' Einträgen';
+
+  // 5. Rendern
   var list = el('hs-list');
   if (!list) return;
-  if (!hsData.length) { list.innerHTML = '<p class="preview-text">Noch keine Eintr&auml;ge.</p>'; return; }
+  if (!filtered.length) {
+    list.innerHTML = '<p class="preview-text">Keine Einträge für diese Auswahl.</p>';
+    return;
+  }
   var h = '';
-  for (var i = 0; i < hsData.length; i++) {
-    var hs = hsData[i];
+  for (var i = 0; i < filtered.length; i++) {
+    var hs = filtered[i];
     var sc, sl;
     if (!hs.returned_at)             { sc='out';  sl='&#x1F7E1; Ausgegeben'; }
     else if (hs.returned_ok===false) { sc='lost'; sl='&#x1F534; Verlust / Schaden'; }
@@ -2253,6 +2343,21 @@ function renderHeadsets() {
       + '</div></div>';
   }
   list.innerHTML = h;
+}
+
+function renderHeadsets() {
+  var total = hsData.length;
+  var out   = hsData.filter(function(h){ return !h.returned_at; }).length;
+  var back  = hsData.filter(function(h){ return h.returned_at && h.returned_ok !== false; }).length;
+  var lost  = hsData.filter(function(h){ return h.returned_at && h.returned_ok === false; }).length;
+  var sum = el('hs-summary');
+  if (sum) sum.innerHTML =
+    '<div class="hs-stat hs-total"><div class="hs-num">' + total + '</div><div class="hs-lbl">Gesamt</div></div>'
+    + '<div class="hs-stat hs-out"><div class="hs-num">' + out + '</div><div class="hs-lbl">Ausgegeben</div></div>'
+    + '<div class="hs-stat hs-back"><div class="hs-num">' + back + '</div><div class="hs-lbl">Zur&uuml;ck</div></div>'
+    + '<div class="hs-stat hs-lost"><div class="hs-num">' + lost + '</div><div class="hs-lbl">Verlust</div></div>';
+  // Delegiert an filterHeadsets() damit Filter/Sort aktiv bleiben
+  filterHeadsets();
 }
 
 function openHsModal(hsId) {

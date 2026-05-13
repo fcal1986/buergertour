@@ -791,6 +791,202 @@ html, body {
 .hs-status-toggle.ok   { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
 .hs-status-toggle.lost { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
 .hs-status-toggle::after { content: ' ▼'; font-size: .55rem; opacity: .5; }
+
+/* ============================================================
+   BUCH-READER
+============================================================ */
+#book-reader {
+  display: flex; flex-direction: column; height: calc(100dvh - var(--tab-h) - var(--header-h, 60px));
+  background: var(--reader-bg, #faf9f6); color: var(--reader-text, #2c2b29);
+  position: relative; overflow: hidden;
+}
+#book-reader.dark {
+  --reader-bg: #1a1917; --reader-text: #e8e4dc;
+  --reader-border: #333; --reader-soft: #888; --reader-surface: #242320;
+}
+
+/* Toolbar */
+.reader-toolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; background: var(--reader-surface, #f0ede6);
+  border-bottom: 1px solid var(--reader-border, #e0dbd0);
+  flex-shrink: 0; z-index: 10;
+}
+.reader-toolbar-title {
+  font-family: 'Playfair Display', serif; font-size: .82rem;
+  font-weight: 600; flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--reader-text, #2c2b29);
+}
+.reader-icon-btn {
+  width: 34px; height: 34px; border-radius: 8px; border: none;
+  background: transparent; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0;
+  color: var(--reader-text, #2c2b29); font-size: 1rem;
+  -webkit-tap-highlight-color: transparent; transition: background .15s;
+}
+.reader-icon-btn:active { background: var(--reader-border, #e0dbd0); }
+.reader-icon-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+/* Inhaltsverzeichnis Overlay */
+.reader-toc-overlay {
+  position: absolute; inset: 0; background: var(--reader-bg, #faf9f6);
+  z-index: 20; overflow-y: auto; padding: 16px;
+  animation: fadeIn .18s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.toc-title {
+  font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700;
+  color: var(--navy); margin-bottom: 16px; padding-bottom: 10px;
+  border-bottom: 2px solid var(--gold);
+}
+.toc-part-header {
+  font-size: .65rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--text-soft); padding: 14px 0 6px;
+}
+.toc-item {
+  padding: 11px 12px; border-radius: 8px; cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
+  -webkit-tap-highlight-color: transparent; transition: background .12s;
+}
+.toc-item:active, .toc-item:hover { background: var(--reader-border, #e0dbd0); }
+.toc-item.active { background: var(--blue-soft); }
+.toc-num {
+  font-size: .68rem; font-weight: 700; color: var(--text-soft);
+  min-width: 24px; text-align: right; flex-shrink: 0;
+}
+.toc-label { font-size: .88rem; font-weight: 500; color: var(--reader-text, #2c2b29); }
+
+/* Lese-Bereich */
+.reader-scroll {
+  flex: 1; overflow-y: auto; padding: 24px 20px 40px;
+  scroll-behavior: smooth;
+}
+.reader-chapter-label {
+  font-size: .65rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--gold); margin-bottom: 8px;
+}
+.reader-chapter-title {
+  font-family: 'Playfair Display', serif;
+  font-size: var(--reader-font-size, 1.45rem);
+  font-weight: 700; line-height: 1.3; color: var(--reader-text, #2c2b29);
+  margin-bottom: 20px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--reader-border, #e0dbd0);
+}
+.reader-body {
+  font-family: 'Playfair Display', serif;
+  font-size: var(--reader-font-size, 1.0rem);
+  line-height: 1.85; color: var(--reader-text, #2c2b29);
+}
+.reader-body p      { margin-bottom: 1.1em; }
+.reader-body h2     { font-size: 1.1em; font-weight: 700; margin: 1.6em 0 .6em; color: var(--navy); }
+.reader-body h3     { font-size: 1em; font-weight: 700; margin: 1.4em 0 .5em; }
+.reader-body ul     { margin: .6em 0 1em 1.2em; }
+.reader-body li     { margin-bottom: .35em; }
+.reader-body strong { font-weight: 700; }
+.reader-body em     { font-style: italic; }
+.reader-body blockquote {
+  border-left: 3px solid var(--gold); margin: 1.2em 0;
+  padding: .6em 1em; background: var(--reader-surface, #f0ede6);
+  border-radius: 0 6px 6px 0; font-style: italic;
+}
+.reader-body blockquote p { margin-bottom: .3em; }
+.reader-body table  { width: 100%; border-collapse: collapse; font-size: .88em; margin: 1em 0; }
+.reader-body th     { background: var(--reader-surface, #f0ede6); padding: 7px 10px; text-align: left; font-weight: 700; font-size: .82em; }
+.reader-body td     { padding: 7px 10px; border-bottom: 1px solid var(--reader-border, #e0dbd0); }
+.reader-body hr     { border: none; border-top: 1px solid var(--reader-border, #e0dbd0); margin: 1.6em 0; }
+.reader-body a      { color: var(--blue); }
+
+/* Kapitel-Navigation unten */
+.reader-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-top: 1px solid var(--reader-border, #e0dbd0);
+  background: var(--reader-surface, #f0ede6); flex-shrink: 0;
+}
+.reader-nav-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: 8px; border: 1px solid var(--reader-border, #e0dbd0);
+  background: transparent; font-family: 'Inter', sans-serif;
+  font-size: .78rem; font-weight: 500; cursor: pointer;
+  color: var(--reader-text, #2c2b29); -webkit-tap-highlight-color: transparent;
+  transition: background .12s;
+}
+.reader-nav-btn:active { background: var(--reader-border, #e0dbd0); }
+.reader-nav-btn:disabled { opacity: .3; cursor: default; }
+.reader-nav-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
+.reader-progress {
+  font-size: .72rem; color: var(--reader-soft, var(--text-soft));
+  font-family: 'Inter', sans-serif;
+}
+
+/* Einstellungen-Popup */
+.reader-settings-popup {
+  position: absolute; top: 54px; right: 10px; z-index: 30;
+  background: var(--reader-surface, #f0ede6);
+  border: 1px solid var(--reader-border, #e0dbd0);
+  border-radius: 12px; padding: 14px 16px; width: 220px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  animation: fadeIn .15s ease;
+}
+.reader-settings-popup label {
+  font-size: .72rem; font-weight: 600; color: var(--reader-soft, var(--text-soft));
+  text-transform: uppercase; letter-spacing: .6px; display: block; margin-bottom: 8px;
+}
+.font-size-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.font-size-row button {
+  width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--reader-border, #e0dbd0);
+  background: transparent; font-size: 1rem; cursor: pointer; color: var(--reader-text, #2c2b29);
+  display: flex; align-items: center; justify-content: center;
+}
+.font-size-row button:active { background: var(--reader-border, #e0dbd0); }
+.font-size-display { flex: 1; text-align: center; font-size: .82rem; font-weight: 600; }
+.dark-mode-row { display: flex; align-items: center; justify-content: space-between; }
+.toggle-switch { width: 44px; height: 24px; border-radius: 12px; background: var(--border); cursor: pointer; position: relative; border: none; transition: background .2s; }
+.toggle-switch.on { background: var(--blue); }
+.toggle-switch::after { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #fff; top: 3px; left: 3px; transition: transform .2s; }
+.toggle-switch.on::after { transform: translateX(20px); }
+
+/* Edit-Modus */
+.reader-edit-bar {
+  padding: 10px 14px; background: #fffbeb; border-bottom: 1px solid #fde68a;
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+.reader-edit-bar span { font-size: .78rem; color: #92400e; flex: 1; font-weight: 500; }
+#book-edit-textarea {
+  flex: 1; width: 100%; padding: 20px;
+  font-family: 'Inter', sans-serif; font-size: .88rem;
+  line-height: 1.65; color: var(--text); background: var(--surface);
+  border: none; outline: none; resize: none; overflow-y: auto;
+}
+
+/* ── BOOK PUBLIC TOGGLE ── */
+.book-public-toggle {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 10px 4px 6px; border-radius: 20px;
+  border: 1.5px solid var(--border); cursor: pointer;
+  background: var(--surface); font-size: .72rem; font-weight: 600;
+  -webkit-tap-highlight-color: transparent; transition: all .15s;
+  white-space: nowrap; flex-shrink: 0;
+}
+.book-public-toggle.is-public {
+  background: #dcfce7; border-color: #bbf7d0; color: #166534;
+}
+.book-public-toggle.not-public {
+  background: var(--surface2); color: var(--text-soft);
+}
+.book-public-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.is-public  .book-public-dot { background: #16a34a; }
+.not-public .book-public-dot { background: var(--border); }
+
+/* Neues Kapitel Button in Toolbar */
+.reader-add-btn {
+  font-size: .68rem; font-weight: 600; color: var(--blue);
+  background: var(--blue-soft); border: 1px solid #bfdbfe;
+  border-radius: 6px; padding: 4px 10px; cursor: pointer;
+  white-space: nowrap; -webkit-tap-highlight-color: transparent;
+}
 </style>
 </head>
 <body>
@@ -956,6 +1152,7 @@ html, body {
           <button class="admin-tab"        data-atab="contacts" onclick="showAdminTab('contacts')">Kontakte</button>
           <button class="admin-tab"        data-atab="info"     onclick="showAdminTab('info')">Info</button>
           <button class="admin-tab"        data-atab="headsets" onclick="showAdminTab('headsets')">Headsets</button>
+          <button class="admin-tab"        data-atab="book"     onclick="showAdminTab('book')">Buch</button>
         </div>
 
         <!-- TAB: Trip Meta -->
@@ -1084,6 +1281,84 @@ html, body {
           </div>
           <div class="hs-count" id="hs-count"></div>
           <div id="hs-list"></div>
+        </div>
+
+
+        <!-- TAB: BUCH READER -->
+        <div id="atab-book" class="admin-section" style="padding:0;overflow:hidden;border-radius:10px">
+          <div id="book-reader">
+
+            <!-- Toolbar -->
+            <div class="reader-toolbar">
+              <button class="reader-icon-btn" id="book-toc-btn" onclick="window.bookToggleToc()" title="Inhaltsverzeichnis">
+                <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="16" y2="12"/><line x1="3" y1="18" x2="12" y2="18"/></svg>
+              </button>
+              <div class="reader-toolbar-title" id="book-toolbar-title">Bürgertour 2026</div>
+              <button class="reader-add-btn" id="book-add-btn" onclick="window.bookNewChapter()" style="display:none" title="Neues Kapitel">+ Kapitel</button>
+              <button class="book-public-toggle not-public" id="book-pub-toggle" onclick="window.bookTogglePublic()" style="display:none">
+                <span class="book-public-dot"></span>
+                <span id="book-pub-label">Nicht öffentlich</span>
+              </button>
+              <button class="reader-icon-btn" id="book-edit-btn" onclick="window.bookToggleEdit()" title="Kapitel bearbeiten">
+                <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button class="reader-icon-btn" id="book-settings-btn" onclick="window.bookToggleSettings()" title="Einstellungen">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              </button>
+            </div>
+
+            <!-- Einstellungen Popup (versteckt) -->
+            <div class="reader-settings-popup" id="book-settings-popup" style="display:none">
+              <label>Schriftgröße</label>
+              <div class="font-size-row">
+                <button onclick="window.bookFontSize(-1)">A−</button>
+                <span class="font-size-display" id="book-font-display">16px</span>
+                <button onclick="window.bookFontSize(+1)">A+</button>
+              </div>
+              <div class="dark-mode-row">
+                <label style="margin:0">Dunkel</label>
+                <button class="toggle-switch" id="book-dark-toggle" onclick="window.bookToggleDark()"></button>
+              </div>
+            </div>
+
+            <!-- Inhaltsverzeichnis Overlay (versteckt) -->
+            <div class="reader-toc-overlay" id="book-toc" style="display:none">
+              <div class="toc-title">&#x1F4D6; Inhaltsverzeichnis</div>
+              <div id="book-toc-list"></div>
+            </div>
+
+            <!-- Edit-Bar (versteckt) -->
+            <div class="reader-edit-bar" id="book-edit-bar" style="display:none">
+              <span>&#x270F; Markdown: **fett**, *kursiv*, ## Überschrift, - Liste, > Zitat</span>
+              <button class="btn btn-primary" style="width:auto;margin:0;padding:6px 14px;font-size:.78rem" onclick="window.bookSaveChapter()">Speichern</button>
+              <button class="btn btn-secondary" style="width:auto;margin:0;padding:6px 12px;font-size:.78rem" onclick="window.bookCancelEdit()">Abbrechen</button>
+              <button class="btn btn-danger" style="width:auto;margin:0;padding:6px 10px;font-size:.78rem" onclick="window.bookDeleteChapter()">&#x1F5D1;</button>
+            </div>
+
+            <!-- Textarea (Edit-Modus, versteckt) -->
+            <textarea id="book-edit-textarea" style="display:none"></textarea>
+
+            <!-- Lese-Bereich -->
+            <div class="reader-scroll" id="book-scroll">
+              <div class="reader-chapter-label" id="book-part-label"></div>
+              <div class="reader-chapter-title" id="book-chapter-title">Wird geladen…</div>
+              <div class="reader-body" id="book-chapter-body"></div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="reader-nav">
+              <button class="reader-nav-btn" id="book-prev-btn" onclick="window.bookNav(-1)">
+                <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+                Zurück
+              </button>
+              <span class="reader-progress" id="book-progress">1 / 14</span>
+              <button class="reader-nav-btn" id="book-next-btn" onclick="window.bookNav(+1)">
+                Weiter
+                <svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
+              </button>
+            </div>
+
+          </div>
         </div>
 
       </div><!-- /admin-panel -->
@@ -2026,6 +2301,7 @@ function showAdminLoggedIn() {
   renderAdminData();
   loadInfoAdminForm();
   loadHeadsets();
+  loadBookChapters();
 }
 
 function showAdminLoggedOut(showToast) {
@@ -2669,6 +2945,348 @@ function headsetInfoBanner() {
     + 'Bei Verlust oder Besch&auml;digung werden <strong>50 &euro;</strong> in Rechnung gestellt.'
     + '</div></div>';
 }
+
+
+// ============================================================
+// BUCH-READER
+// ============================================================
+var bookChapters  = [];
+var bookIndex     = 0;
+var bookFontPx    = 16;
+var bookDark      = false;
+var bookEditMode  = false;
+var bookTocOpen   = false;
+var bookSetOpen   = false;
+
+// ── Markdown → HTML (einfacher Parser) ──────────────────────
+function bookMd(text) {
+  if (!text) return '';
+  var h = text
+    // Tabellen
+    .replace(/^\|(.+)\|\s*$/gm, function(line) {
+      var cells = line.split('|').slice(1,-1);
+      var isSep = cells.every(function(c){ return /^[-: ]+$/.test(c); });
+      if (isSep) return '';
+      var tag = '<td>';
+      return '<tr>' + cells.map(function(c){ return tag + c.trim() + '</td>'; }).join('') + '</tr>';
+    })
+    .replace(/(<tr>.*<\/tr>\s*)+/g, function(m){ return '<table>' + m + '</table>'; })
+    // Überschriften
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,  '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,   '<h1>$1</h1>')
+    // Blockquotes
+    .replace(/^> (.+)$/gm, '<blockquote><p>$1</p></blockquote>')
+    // Bold / Italic
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,     '<em>$1</em>')
+    // Listen
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\s*)+/g, function(m){ return '<ul>' + m + '</ul>'; })
+    // HR
+    .replace(/^---$/gm, '<hr>')
+    // Absätze: Leerzeilen → <p>
+    .split(/\n\n+/)
+    .map(function(block) {
+      block = block.trim();
+      if (!block) return '';
+      if (/<(h[123]|ul|table|blockquote|hr)/.test(block)) return block;
+      return '<p>' + block.replace(/\n/g, '<br>') + '</p>';
+    })
+    .join('\n');
+  return h;
+}
+
+// ── Kapitel rendern ─────────────────────────────────────────
+function bookRenderChapter() {
+  var c = bookChapters[bookIndex];
+  if (!c) return;
+
+  // Toolbar-Titel
+  el('book-toolbar-title').textContent = c.title;
+
+  // Part-Label
+  var lbl = el('book-part-label');
+  if (c.part_title) {
+    lbl.textContent = 'Teil ' + c.part_nr + ' · ' + c.part_title;
+    lbl.style.display = 'block';
+  } else {
+    lbl.style.display = 'none';
+  }
+
+  // Kapitel-Titel
+  var chNum = c.chapter_nr > 0 ? 'Kapitel ' + c.chapter_nr + ' · ' : '';
+  el('book-chapter-title').textContent = chNum + c.title;
+
+  // Inhalt
+  if (!bookEditMode) {
+    el('book-chapter-body').innerHTML = bookMd(c.content || '');
+  }
+
+  // Fortschritt
+  el('book-progress').textContent = (bookIndex + 1) + ' / ' + bookChapters.length;
+
+  // Nav-Buttons
+  el('book-prev-btn').disabled = bookIndex === 0;
+  el('book-next-btn').disabled = bookIndex === bookChapters.length - 1;
+
+  // Admin-Controls
+  var isAdmin = !!adminState.session;
+  var pubToggle = el('book-pub-toggle');
+  var addBtn    = el('book-add-btn');
+  var editBtn   = el('book-edit-btn');
+  if (pubToggle) {
+    pubToggle.style.display = isAdmin ? '' : 'none';
+    var isPub = c && c.is_public;
+    pubToggle.className = 'book-public-toggle ' + (isPub ? 'is-public' : 'not-public');
+    el('book-pub-label').textContent = isPub ? 'Öffentlich' : 'Nicht öffentlich';
+  }
+  if (addBtn)  addBtn.style.display  = isAdmin ? '' : 'none';
+  if (editBtn) editBtn.style.display = isAdmin ? '' : 'none';
+  // TOC-Badge: zeigt (privat) an bei nicht-öffentlichen Kapiteln für Admins
+  document.querySelectorAll('.toc-item').forEach(function(item, i) {
+    var ch = bookChapters[i];
+    var badge = item.querySelector('.toc-pub-badge');
+    if (badge) badge.textContent = (ch && !ch.is_public && isAdmin) ? ' 🔒' : '';
+  });
+
+  // Scroll to top
+  var scroll = el('book-scroll');
+  if (scroll) scroll.scrollTop = 0;
+
+  // Font-Size anwenden
+  bookApplyFont();
+
+  // TOC aktiven Eintrag markieren
+  document.querySelectorAll('.toc-item').forEach(function(item, i) {
+    item.classList.toggle('active', i === bookIndex);
+  });
+}
+
+// ── TOC rendern ─────────────────────────────────────────────
+function bookRenderToc() {
+  var list = el('book-toc-list');
+  if (!list) return;
+  var lastPart = -1;
+  var h = '';
+  bookChapters.forEach(function(c, i) {
+    if (c.part_nr !== lastPart) {
+      if (c.part_title) {
+        h += '<div class="toc-part-header">'
+          + (c.part_nr > 0 ? 'Teil ' + c.part_nr + ' – ' : '')
+          + c.part_title + '</div>';
+      }
+      lastPart = c.part_nr;
+    }
+    h += '<div class="toc-item' + (i === bookIndex ? ' active' : '')
+      + '" onclick="window.bookGoTo(' + i + ')">'
+      + '<span class="toc-num">' + (c.chapter_nr > 0 ? c.chapter_nr : '') + '</span>'
+      + '<span class="toc-label">' + x(c.title) + '</span>'
+      + (isAdmin && !c.is_public ? '<span class="toc-pub-badge" style="color:#d97706;font-size:.7rem"> 🔒</span>' : '')
+      + '</div>';
+  });
+  list.innerHTML = h;
+}
+
+// ── Navigation ───────────────────────────────────────────────
+window.bookNav = function(dir) {
+  bookIndex = Math.max(0, Math.min(bookChapters.length - 1, bookIndex + dir));
+  bookRenderChapter();
+};
+
+window.bookGoTo = function(i) {
+  bookIndex = i;
+  bookRenderChapter();
+  el('book-toc').style.display = 'none';
+  bookTocOpen = false;
+};
+
+// ── TOC Toggle ───────────────────────────────────────────────
+window.bookToggleToc = function() {
+  bookTocOpen = !bookTocOpen;
+  el('book-toc').style.display = bookTocOpen ? 'block' : 'none';
+  if (bookSetOpen) { el('book-settings-popup').style.display='none'; bookSetOpen=false; }
+  if (bookTocOpen) bookRenderToc();
+};
+
+// ── Einstellungen ────────────────────────────────────────────
+window.bookToggleSettings = function() {
+  bookSetOpen = !bookSetOpen;
+  el('book-settings-popup').style.display = bookSetOpen ? 'block' : 'none';
+  if (bookTocOpen) { el('book-toc').style.display='none'; bookTocOpen=false; }
+};
+
+window.bookFontSize = function(delta) {
+  bookFontPx = Math.max(12, Math.min(24, bookFontPx + delta));
+  el('book-font-display').textContent = bookFontPx + 'px';
+  bookApplyFont();
+};
+
+function bookApplyFont() {
+  var r = el('book-reader');
+  if (r) {
+    r.style.setProperty('--reader-font-size', bookFontPx + 'px');
+    el('book-chapter-title').style.fontSize = (bookFontPx * 1.4) + 'px';
+  }
+}
+
+window.bookToggleDark = function() {
+  bookDark = !bookDark;
+  var r = el('book-reader');
+  if (r) r.classList.toggle('dark', bookDark);
+  var t = el('book-dark-toggle');
+  if (t) t.classList.toggle('on', bookDark);
+};
+
+// ── Edit-Modus ───────────────────────────────────────────────
+window.bookToggleEdit = function() {
+  if (!adminState.session) { toast('Nur für Admins', 'error'); return; }
+  bookEditMode = !bookEditMode;
+  var c = bookChapters[bookIndex];
+  var editBar  = el('book-edit-bar');
+  var editArea = el('book-edit-textarea');
+  var scroll   = el('book-scroll');
+  var editBtn  = el('book-edit-btn');
+  if (bookEditMode) {
+    editBar.style.display  = 'flex';
+    editArea.style.display = 'block';
+    scroll.style.display   = 'none';
+    editArea.value = c ? (c.content || '') : '';
+    editArea.focus();
+    editBtn.style.background = 'var(--blue-soft)';
+  } else {
+    editBar.style.display  = 'none';
+    editArea.style.display = 'none';
+    scroll.style.display   = '';
+    editBtn.style.background = '';
+  }
+};
+
+window.bookCancelEdit = function() {
+  bookEditMode = false;
+  window.bookToggleEdit();
+  bookEditMode = false;
+  el('book-edit-bar').style.display  = 'none';
+  el('book-edit-textarea').style.display = 'none';
+  el('book-scroll').style.display   = '';
+  el('book-edit-btn').style.background = '';
+};
+
+// ── Public/Private Toggle ─────────────────────────────────
+window.bookTogglePublic = async function() {
+  var c = bookChapters[bookIndex];
+  if (!c || !adminState.session) return;
+  var newVal = !c.is_public;
+  var client = getSB();
+  if (!client) return;
+  var res = await client.from('book_chapters')
+    .update({ is_public: newVal })
+    .eq('id', c.id);
+  if (res.error) { toast(res.error.message, 'error'); return; }
+  c.is_public = newVal;
+  bookRenderChapter();
+  bookRenderToc();
+  toast(newVal ? 'Kapitel ist jetzt öffentlich ✓' : 'Kapitel ist jetzt privat 🔒');
+  DB.log('Kapitel ' + (newVal ? 'öffentlich' : 'privat') + ': ' + c.title, 'ok');
+};
+
+// ── Neues Kapitel anlegen ──────────────────────────────────
+window.bookNewChapter = function() {
+  if (!adminState.session) return;
+  var lastCh = bookChapters[bookChapters.length - 1];
+  var newSortOrder = lastCh ? lastCh.sort_order + 1 : 1;
+  openModal('Neues Kapitel',
+    '<div class="field-group"><label>Titel <span class="required">*</span></label>'
+    + '<input type="text" id="nc-title" placeholder="z.B. Exkurs: Die Mafia-Legende" /></div>'
+    + '<div class="field-group"><label>Teil-Nr. (0 = kein Teil)</label>'
+    + '<input type="number" id="nc-part" value="0" min="0" /></div>'
+    + '<div class="field-group"><label>Teil-Titel (optional)</label>'
+    + '<input type="text" id="nc-part-title" placeholder="z.B. Exkurse" /></div>'
+    + '<div class="field-group"><label>Kapitel-Nr. (0 = unnummeriert)</label>'
+    + '<input type="number" id="nc-chapter" value="0" min="0" /></div>',
+    async function() {
+      var title = gv('nc-title');
+      if (!title) { toast('Titel fehlt', 'error'); return false; }
+      var client = getSB();
+      if (!client) return false;
+      var res = await client.from('book_chapters').insert({
+        trip_id:     TRIP_ID,
+        title:       title,
+        part_nr:     parseInt(gv('nc-part') || '0'),
+        part_title:  gv('nc-part-title') || '',
+        chapter_nr:  parseInt(gv('nc-chapter') || '0'),
+        content:     '',
+        sort_order:  newSortOrder,
+        is_public:   false,
+      }).select();
+      if (res.error) throw res.error;
+      await loadBookChapters();
+      // Zum neuen Kapitel springen
+      bookIndex = bookChapters.length - 1;
+      bookRenderChapter();
+      toast('Kapitel angelegt – jetzt bearbeiten ✓');
+    }
+  );
+};
+
+// ── Kapitel löschen ────────────────────────────────────────
+window.bookDeleteChapter = async function() {
+  var c = bookChapters[bookIndex];
+  if (!c) return;
+  if (!confirm('Kapitel "' + c.title + '" wirklich löschen?')) return;
+  var client = getSB();
+  if (!client) return;
+  var res = await client.from('book_chapters').delete().eq('id', c.id);
+  if (res.error) { toast(res.error.message, 'error'); return; }
+  bookIndex = Math.max(0, bookIndex - 1);
+  await loadBookChapters();
+  toast('Kapitel gelöscht');
+};
+
+window.bookSaveChapter = async function() {
+  var c = bookChapters[bookIndex];
+  if (!c) return;
+  var newContent = el('book-edit-textarea').value;
+  var client = getSB();
+  if (!client) { toast('Nicht verbunden', 'error'); return; }
+  var res = await client.from('book_chapters')
+    .update({ content: newContent, updated_at: new Date().toISOString() })
+    .eq('id', c.id);
+  if (res.error) { toast(res.error.message, 'error'); return; }
+  c.content = newContent;
+  window.bookCancelEdit();
+  bookRenderChapter();
+  toast('Kapitel gespeichert ✓');
+  DB.log('Kapitel gespeichert: ' + c.title, 'ok');
+};
+
+// ── Laden ────────────────────────────────────────────────────
+async function loadBookChapters() {
+  var client = getSB();
+  if (!client) return;
+  try {
+    // Admin sieht alle Kapitel, Public nur freigegebene
+    var query = client.from('book_chapters')
+      .select('*')
+      .eq('trip_id', TRIP_ID)
+      .order('sort_order');
+    if (!adminState.session) query = query.eq('is_public', true);
+    var res = await query;
+    if (res.error) throw res.error;
+    bookChapters = res.data || [];
+    if (bookChapters.length) bookRenderChapter();
+    else el('book-chapter-title').textContent = 'Keine Kapitel vorhanden.';
+    DB.log('Buch geladen: ' + bookChapters.length + ' Kapitel', 'ok');
+  } catch(e) { DB.log('Buch FEHLER: ' + e.message, 'error'); }
+}
+
+// Schließe Popups bei Klick außerhalb
+document.addEventListener('click', function(e) {
+  if (bookSetOpen && !e.target.closest('#book-settings-popup') && !e.target.closest('#book-settings-btn')) {
+    el('book-settings-popup').style.display = 'none';
+    bookSetOpen = false;
+  }
+});
 
 // ============================================================
 // PUBLIC LOG DIALOG

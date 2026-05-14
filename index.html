@@ -1001,6 +1001,21 @@ html, body {
 .book-pub-label .pub-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .book-pub-label.public  .pub-dot { background: #16a34a; }
 .book-pub-label.private .pub-dot { background: #94a3b8; }
+
+/* ── WETTER REFRESH ── */
+.weather-refresh-btn {
+  position: absolute; top: 10px; right: 10px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+  color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .15s, transform .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.weather-refresh-btn:active { background: rgba(255,255,255,.3); }
+.weather-refresh-btn.spinning svg { animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.weather-card { position: relative; }
+.weather-updated { font-size: .62rem; color: rgba(255,255,255,.4); margin-top: 3px; }
 </style>
 </head>
 <body>
@@ -1990,7 +2005,13 @@ async function loadWeather() {
     var tmrStr  = tmrMax !== null
       ? '<div class="weather-tomorrow">'        + '<span class="wt-label">Morgen</span>'        + '<span class="wt-icon">' + tmrIcon + '</span>'        + '<span class="wt-temp">' + tmrMin + '–' + tmrMax + '&deg;</span>'        + '<span class="wt-desc">' + tmrDesc + '</span>'        + '</div>'
       : '';
+    var now = new Date().toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'});
     w.innerHTML = '<div class="weather-card">'
+      + '<button class="weather-refresh-btn" id="weather-refresh-btn" onclick="window.refreshWeather()" title="Wetter aktualisieren">'
+      + '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">'
+      + '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>'
+      + '<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>'
+      + '</svg></button>'
       + '<div class="weather-icon">' + icon + '</div>'
       + '<div style="flex:1">'
       + '<div class="weather-temp">' + temp + '&deg;C</div>'
@@ -1998,7 +2019,7 @@ async function loadWeather() {
       + '<div class="weather-meta">Gef&uuml;hlt ' + feel + '&deg;C'
       + ' &middot; Wind ' + wind + ' km/h'
       + ' &middot; Luft ' + humi + '%</div>'
-      + '<div class="weather-city">&#128205; Catania, Sizilien</div>'
+      + '<div class="weather-city">&#128205; Catania, Sizilien &middot; Stand ' + now + ' Uhr</div>'
       + tmrStr
       + '</div></div>';
     DB.log('Wetter: ' + temp + 'C, ' + desc, 'ok');
@@ -2006,7 +2027,16 @@ async function loadWeather() {
     w.innerHTML = '';
     DB.log('Wetter Fehler: ' + e.message, 'warn');
   }
+  // Spinner stoppen
+  var btn = el('weather-refresh-btn');
+  if (btn) btn.classList.remove('spinning');
 }
+
+window.refreshWeather = async function() {
+  var btn = el('weather-refresh-btn');
+  if (btn) btn.classList.add('spinning');
+  await loadWeather();
+};
 
 
 // Öffentliche Headset-Liste auch ohne Admin-Login laden

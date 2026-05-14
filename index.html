@@ -1122,6 +1122,38 @@ body.book-fullscreen main {
 body.book-fullscreen .reader-fullscreen-btn svg {
   opacity: .8;
 }
+
+/* ── BUCH EDIT LAYOUT (Mobile-optimiert) ── */
+#book-reader.editing {
+  overflow: hidden;
+}
+#book-reader.editing #book-toolbar-read,
+#book-reader.editing .reader-nav,
+#book-reader.editing #book-scroll { display: none !important; }
+
+#book-toolbar-edit {
+  position: sticky; top: 0; z-index: 50;
+  background: #fffbeb;
+}
+
+#book-edit-textarea {
+  flex: 1;
+  width: 100%;
+  /* Höhe wird per JS dynamisch gesetzt basierend auf visualViewport */
+  min-height: 200px;
+  padding: 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--surface);
+  border: none;
+  outline: none;
+  resize: none;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
 </style>
 </head>
 <body>
@@ -3626,17 +3658,20 @@ window.bookToggleEdit = function() {
   bookEditMode = !bookEditMode;
   var c = bookChapters[bookIndex];
   if (bookEditMode) {
-    // Neue HTML-Struktur: book-toolbar-read/edit tauschen
-    el('book-toolbar-read').style.display  = 'none';
     el('book-toolbar-edit').style.display  = 'block';
-    el('book-scroll').style.display        = 'none';
-    el('book-edit-textarea').style.display = 'flex';
-    var nav = document.querySelector('#book-reader .reader-nav');
-    if (nav) nav.style.display = 'none';
+    el('book-edit-textarea').style.display = 'block';
+    el('book-reader') && el('book-reader').classList.add('editing');
     var ti = el('book-edit-title');
     if (ti) ti.value = c ? (c.title || '') : '';
-    el('book-edit-textarea').value = c ? (c.content || '') : '';
-    el('book-edit-textarea').focus();
+    var ta = el('book-edit-textarea');
+    ta.value = c ? (c.content || '') : '';
+    // Höhe initial setzen, dann nach kurzer Verzögerung anpassen
+    setTimeout(function() {
+      bookSetEditorHeight();
+      ta.focus();
+      // Cursor ans Ende
+      ta.selectionStart = ta.selectionEnd = ta.value.length;
+    }, 80);
   } else {
     window.bookCancelEdit();
   }
@@ -3644,16 +3679,14 @@ window.bookToggleEdit = function() {
 
 window.bookCancelEdit = function() {
   bookEditMode = false;
-  var read = el('book-toolbar-read');
+  var reader = el('book-reader');
+  if (reader) reader.classList.remove('editing');
   var edit = el('book-toolbar-edit');
   var area = el('book-edit-textarea');
-  var scroll = el('book-scroll');
-  if (read)  read.style.display  = '';
-  if (edit)  edit.style.display  = 'none';
-  if (area)  area.style.display  = 'none';
-  if (scroll) scroll.style.display = '';
-  var nav = document.querySelector('#book-reader .reader-nav');
-  if (nav) nav.style.display = '';
+  if (edit) edit.style.display = 'none';
+  if (area) { area.style.display = 'none'; area.style.height = ''; }
+  // Blur damit Tastatur verschwindet
+  if (document.activeElement) document.activeElement.blur();
 };
 
 window.bookSaveChapter = async function() {
@@ -3843,6 +3876,41 @@ async function loadPublicBookChapters() {
   } catch(e) { /* silent for public users */ }
 }
 
+
+
+// ── TASTATUR-ANPASSUNG FÜR BUCH-EDITOR ──────────────────────
+function bookSetEditorHeight() {
+  var textarea = el('book-edit-textarea');
+  if (!textarea || textarea.style.display === 'none') return;
+
+  var editBar = el('book-toolbar-edit');
+  var editBarH = editBar ? editBar.offsetHeight : 120;
+
+  if (window.visualViewport) {
+    // visualViewport gibt die sichtbare Fläche zurück (ohne Tastatur)
+    var vpHeight  = window.visualViewport.height;
+    var vpOffsetY = window.visualViewport.offsetTop;
+    var available = vpHeight - editBarH - 8;
+    textarea.style.height = Math.max(150, available) + 'px';
+  } else {
+    // Fallback ohne visualViewport API
+    textarea.style.height = 'calc(100dvh - ' + editBarH + 'px - 8px)';
+  }
+}
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', function() {
+    bookSetEditorHeight();
+    // Textarea bei Tastatur-Öffnung ins Sichtfeld scrollen
+    var textarea = el('book-edit-textarea');
+    if (textarea && document.activeElement === textarea) {
+      setTimeout(function() {
+        textarea.scrollTop = textarea.scrollTop; // trigger repaint
+      }, 50);
+    }
+  });
+  window.visualViewport.addEventListener('scroll', bookSetEditorHeight);
+}
 
 // ── BUCH VOLLBILD ─────────────────────────────────────────────
 var bookIsFullscreen = false;

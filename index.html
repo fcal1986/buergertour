@@ -2310,8 +2310,6 @@ async function loadPublicHeadsets() {
 }
 
 async function bootData() {
-  initWeatherLocation();
-  loadWeather();
   DB.log('App gestartet – Host: ' + location.hostname, 'info');
   DB.log('Online: ' + navigator.onLine, navigator.onLine ? 'ok' : 'warn');
   DB.log('Config URL: ' + SUPABASE_URL.slice(0,50), 'info');
@@ -2326,6 +2324,7 @@ async function bootData() {
   initWeatherLocation();
   render();
   renderInfoView();
+  loadWeather(); // Nach fetchAll – data.days ist jetzt verfügbar für Chips
   await loadPublicHeadsets();
   await loadPublicBookChapters();
   loading(false);
@@ -2720,10 +2719,28 @@ function _openDayModal(dayId) {
       <input type="date" id="m-ddate" value="${day?.date||''}" /></div>
     <div class="field-group"><label>Bezeichnung</label>
       <input type="text" id="m-dlabel" value="${x(day?.label||'')}" placeholder="z.B. Köln – Ankunft &amp; Auftakt" /></div>
+    <div class="field-group"><label>&#127777; Wetter-Ort (Anzeigename)</label>
+      <input type="text" id="m-wlabel" value="${x(day?.weather_label||'')}" placeholder="z.B. Catania" /></div>
+    <div class="field-row">
+      <div class="field-group"><label>Breitengrad</label>
+        <input type="number" id="m-wlat" step="0.00001" value="${day?.weather_lat||''}" placeholder="37.50230" /></div>
+      <div class="field-group"><label>L&auml;ngengrad</label>
+        <input type="number" id="m-wlon" step="0.00001" value="${day?.weather_lon||''}" placeholder="15.08719" /></div>
+    </div>
   `, async () => {
-    const num = parseInt(el('m-dnum').value);
+    const num  = parseInt(el('m-dnum').value);
     if (!num) { toast('Tag-Nummer fehlt', 'error'); return false; }
-    const fields = { day_number: num, date: gv('m-ddate')||null, label: gv('m-dlabel'), sort_order: num };
+    const wlat = parseFloat(el('m-wlat')?.value);
+    const wlon = parseFloat(el('m-wlon')?.value);
+    const fields = {
+      day_number:    num,
+      date:          gv('m-ddate')||null,
+      label:         gv('m-dlabel'),
+      sort_order:    num,
+      weather_label: el('m-wlabel')?.value.trim() || null,
+      weather_lat:   isNaN(wlat) ? null : wlat,
+      weather_lon:   isNaN(wlon) ? null : wlon,
+    };
     const { error } = dayId
       ? await sbq(c => c.from('schedule_days').update(fields).eq('id', dayId))
       : await sbq(c => c.from('schedule_days').insert({ ...fields, trip_id: TRIP_ID }));

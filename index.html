@@ -1018,7 +1018,7 @@ html, body {
 /* ── WETTER TAGESVERLAUF ── */
 .weather-hourly {
   display: flex; gap: 0; overflow-x: auto; margin-top: 10px;
-  padding: 10px 0 12px; border-top: 1px solid rgba(255,255,255,.15);
+  padding: 8px 4px 12px; border-top: 1px solid rgba(255,255,255,.15);
   scrollbar-width: none; -ms-overflow-style: none;
   width: 100%; /* stretch full card width */
 }
@@ -1030,13 +1030,15 @@ html, body {
   position: relative;
 }
 .wh-slot.now {
-  background: rgba(255,255,255,.18);
-  box-shadow: 0 0 0 1px rgba(255,255,255,.25);
+  background: rgba(255,255,255,.2);
+  box-shadow: 0 0 0 1.5px rgba(255,255,255,.5);
 }
-.wh-slot.now::before {
-  content: 'Jetzt'; position: absolute; top: -18px;
-  font-size: .55rem; font-weight: 700; color: rgba(255,255,255,.7);
-  text-transform: uppercase; letter-spacing: .6px;
+.wh-slot.now .wh-time {
+  color: rgba(255,255,255,.95);
+  font-weight: 700;
+}
+.wh-slot.now .wh-temp {
+  color: #fff;
 }
 .wh-time  { font-size: .62rem; color: rgba(255,255,255,.5); font-weight: 500; }
 .wh-icon  { font-size: 1.1rem; line-height: 1; }
@@ -2036,10 +2038,16 @@ function buildHourly(json) {
     var s    = slots[j];
     var icon = WICONS[s.code] || '&#127777;';
     var rainStr = s.rain > 0 ? s.rain + '%' : '';
+    var nowBadge = s.isNow
+      ? '<span style="font-size:.52rem;font-weight:700;color:rgba(255,255,255,.9);'
+      + 'background:rgba(255,255,255,.2);border-radius:4px;padding:1px 4px;margin-top:1px">'
+      + 'Jetzt</span>'
+      : '<span style="min-height:14px;display:block"></span>';
     html += '<div class="wh-slot' + (s.isNow ? ' now' : '') + '">'
       + '<span class="wh-time">' + String(s.hour).padStart(2,'0') + ':00</span>'
       + '<span class="wh-icon">' + icon + '</span>'
       + '<span class="wh-temp">' + s.temp + '&deg;</span>'
+      + nowBadge
       + '<span class="wh-rain">' + rainStr + '</span>'
       + '</div>';
   }

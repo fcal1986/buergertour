@@ -2062,9 +2062,11 @@ function buildHourly(json) {
     if (s.dateStr !== lastDate) {
       lastDate = s.dateStr;
       var d = new Date(s.dateStr + 'T12:00:00');
-      var isToday    = s.dateStr === now.toISOString().slice(0,10);
-      var isTomorrow = !isToday;
-      var dayLabel   = isToday ? 'Heute' : (isTomorrow ? 'Morgen · ' + dayNames[d.getDay()] : dayNames[d.getDay()]);
+      var todayStr    = now.toISOString().slice(0,10);
+      var tomorrowStr = new Date(now.getTime() + 86400000).toISOString().slice(0,10);
+      var dayLabel    = s.dateStr === todayStr    ? 'Heute'
+                      : s.dateStr === tomorrowStr ? 'Morgen · ' + dayNames[d.getDay()]
+                      : dayNames[d.getDay()];
       html += '<div class="wh-day-sep"><span>' + dayLabel + '</span></div>';
     }
 

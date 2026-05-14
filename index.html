@@ -1091,6 +1091,37 @@ html, body {
 }
 .weather-loc-reset:active { background: rgba(255,255,255,.3); }
 .weather-loc-reset.hidden { display: none; }
+
+/* ── BUCH VOLLBILD ── */
+.reader-fullscreen-btn {
+  width: 32px; height: 32px; border-radius: 8px; border: none;
+  background: transparent; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0;
+  color: var(--reader-text, #2c2b29); font-size: 1rem;
+  -webkit-tap-highlight-color: transparent; transition: background .15s;
+}
+.reader-fullscreen-btn:active { background: var(--reader-border, #e0dbd0); }
+.reader-fullscreen-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+/* Vollbild-Modus: Header + TabBar verstecken, Reader fullscreen */
+body.book-fullscreen #top-header,
+body.book-fullscreen #tab-bar { display: none !important; }
+
+body.book-fullscreen #book-reader-public,
+body.book-fullscreen #book-reader {
+  height: 100dvh !important;
+  height: 100vh !important; /* Fallback */
+  border-radius: 0 !important;
+}
+
+body.book-fullscreen main {
+  padding-bottom: 0 !important;
+}
+
+/* Exit-Button im Vollbild sichtbarer */
+body.book-fullscreen .reader-fullscreen-btn svg {
+  opacity: .8;
+}
 </style>
 </head>
 <body>
@@ -1457,6 +1488,9 @@ html, body {
               </button>
               <button class="reader-icon-btn" onclick="window.bookToggleSettings()" id="book-settings-btn" title="Einstellungen">
                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              </button>
+              <button class="reader-icon-btn" id="book-fs-btn" onclick="window.bookToggleFullscreen()" title="Vollbild">
+                <svg viewBox="0 0 24 24" id="book-fs-icon"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
               </button>
             </div>
 
@@ -3808,6 +3842,57 @@ async function loadPublicBookChapters() {
     bookPubRender();
   } catch(e) { /* silent for public users */ }
 }
+
+
+// ── BUCH VOLLBILD ─────────────────────────────────────────────
+var bookIsFullscreen = false;
+
+window.bookToggleFullscreen = function() {
+  bookIsFullscreen = !bookIsFullscreen;
+  document.body.classList.toggle('book-fullscreen', bookIsFullscreen);
+
+  // Icon tauschen: Expand ↔ Compress
+  var icons = document.querySelectorAll('#book-fs-icon, #book-pub-fs-icon');
+  icons.forEach(function(icon) {
+    icon.innerHTML = bookIsFullscreen
+      ? '<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/>'
+      : '<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>';
+  });
+
+  // Native Fullscreen API (Android Chrome)
+  if (bookIsFullscreen && document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen().catch(function(){});
+  } else if (!bookIsFullscreen && document.fullscreenElement) {
+    document.exitFullscreen().catch(function(){});
+  }
+
+  // iOS: kurz scrollen damit Browser-UI sich anpasst
+  if (bookIsFullscreen) {
+    setTimeout(function() { window.scrollTo(0, 1); }, 100);
+  }
+};
+
+// Fullscreen verlassen wenn Tab gewechselt wird
+var _origShowView = window.showView;
+window.showView = function(id) {
+  if (bookIsFullscreen && id !== 'book-public') {
+    window.bookToggleFullscreen();
+  }
+  _origShowView(id);
+};
+
+// Fullscreen verlassen bei Browser-Back / Escape
+document.addEventListener('fullscreenchange', function() {
+  if (!document.fullscreenElement && bookIsFullscreen) {
+    bookIsFullscreen = false;
+    document.body.classList.remove('book-fullscreen');
+    var icons = document.querySelectorAll('#book-fs-icon, #book-pub-fs-icon');
+    icons.forEach(function(icon) {
+      icon.innerHTML = '<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>'
+        + '<line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>';
+    });
+  }
+});
 
 // ============================================================
 // PUBLIC LOG DIALOG

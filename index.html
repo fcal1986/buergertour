@@ -1016,6 +1016,33 @@ html, body {
 @keyframes spin { to { transform: rotate(360deg); } }
 .weather-card { position: relative; }
 .weather-updated { font-size: .62rem; color: rgba(255,255,255,.4); margin-top: 3px; }
+
+/* ── WETTER TAGESVERLAUF ── */
+.weather-hourly {
+  display: flex; gap: 0; overflow-x: auto; margin-top: 12px;
+  padding-top: 12px; border-top: 1px solid rgba(255,255,255,.15);
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.weather-hourly::-webkit-scrollbar { display: none; }
+.wh-slot {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  min-width: 52px; padding: 6px 4px; border-radius: 10px;
+  flex-shrink: 0; cursor: default; transition: background .15s;
+  position: relative;
+}
+.wh-slot.now {
+  background: rgba(255,255,255,.18);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.25);
+}
+.wh-slot.now::before {
+  content: 'Jetzt'; position: absolute; top: -18px;
+  font-size: .55rem; font-weight: 700; color: rgba(255,255,255,.7);
+  text-transform: uppercase; letter-spacing: .6px;
+}
+.wh-time  { font-size: .62rem; color: rgba(255,255,255,.5); font-weight: 500; }
+.wh-icon  { font-size: 1.1rem; line-height: 1; }
+.wh-temp  { font-size: .75rem; font-weight: 700; color: rgba(255,255,255,.95); }
+.wh-rain  { font-size: .58rem; color: rgba(120,200,255,.8); font-weight: 600; min-height: 10px; }
 </style>
 </head>
 <body>
@@ -1976,6 +2003,51 @@ var WDESC = {
   95:'Gewitter',96:'Gewitter',99:'Gewitter'
 };
 
+
+function buildHourly(json) {
+  if (!json.hourly) return '';
+  var times  = json.hourly.time                     || [];
+  var temps  = json.hourly.temperature_2m            || [];
+  var codes  = json.hourly.weather_code              || [];
+  var rains  = json.hourly.precipitation_probability || [];
+
+  // Nur heute 06:00–22:00
+  var todayDate = new Date().toISOString().slice(0, 10);
+  var nowHour   = new Date().getHours();
+
+  var slots = [];
+  for (var i = 0; i < times.length; i++) {
+    var t = times[i]; // "2026-05-15T08:00"
+    if (!t.startsWith(todayDate)) continue;
+    var hour = parseInt(t.slice(11, 13));
+    if (hour < 6 || hour > 22) continue;
+    slots.push({
+      hour:  hour,
+      temp:  Math.round(temps[i]),
+      code:  codes[i],
+      rain:  rains[i],
+      isNow: hour === nowHour
+    });
+  }
+
+  if (!slots.length) return '';
+
+  var html = '<div class="weather-hourly">';
+  for (var j = 0; j < slots.length; j++) {
+    var s    = slots[j];
+    var icon = WICONS[s.code] || '&#127777;';
+    var rainStr = s.rain > 0 ? s.rain + '%' : '';
+    html += '<div class="wh-slot' + (s.isNow ? ' now' : '') + '">'
+      + '<span class="wh-time">' + String(s.hour).padStart(2,'0') + ':00</span>'
+      + '<span class="wh-icon">' + icon + '</span>'
+      + '<span class="wh-temp">' + s.temp + '&deg;</span>'
+      + '<span class="wh-rain">' + rainStr + '</span>'
+      + '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
 async function loadWeather() {
   var w = el('weather-widget');
   if (!w) return;
@@ -1984,6 +2056,7 @@ async function loadWeather() {
     var url = 'https://api.open-meteo.com/v1/forecast'
       + '?latitude=37.50&longitude=15.09'
       + '&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m'
+      + '&hourly=temperature_2m,weather_code,precipitation_probability'
       + '&daily=weather_code,temperature_2m_max,temperature_2m_min'
       + '&wind_speed_unit=kmh&timezone=Europe%2FRome&forecast_days=2';
     var res  = await fetch(url);
@@ -2021,8 +2094,14 @@ async function loadWeather() {
       + ' &middot; Luft ' + humi + '%</div>'
       + '<div class="weather-city">&#128205; Catania, Sizilien &middot; Stand ' + now + ' Uhr</div>'
       + tmrStr
+      + buildHourly(json)
       + '</div></div>';
     DB.log('Wetter: ' + temp + 'C, ' + desc, 'ok');
+    // Zur aktuellen Stunde scrollen
+    setTimeout(function() {
+      var nowSlot = document.querySelector('.wh-slot.now');
+      if (nowSlot) nowSlot.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }, 100);
   } catch (e) {
     w.innerHTML = '';
     DB.log('Wetter Fehler: ' + e.message, 'warn');

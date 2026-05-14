@@ -1057,6 +1057,40 @@ html, body {
   writing-mode: vertical-rl; transform: rotate(180deg);
   white-space: nowrap;
 }
+
+/* ── WETTER ORT-SELECTOR ── */
+.weather-location-bar {
+  display: flex; align-items: center; gap: 0;
+  padding: 8px 0 0; margin-top: 4px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+.weather-loc-chips {
+  display: flex; gap: 6px; overflow-x: auto; flex: 1;
+  scrollbar-width: none; -ms-overflow-style: none;
+  padding: 2px 4px 6px;
+}
+.weather-loc-chips::-webkit-scrollbar { display: none; }
+.wl-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 20px; border: none; cursor: pointer;
+  font-family: 'Inter', sans-serif; font-size: .7rem; font-weight: 600;
+  white-space: nowrap; flex-shrink: 0; transition: all .15s;
+  background: rgba(255,255,255,.12); color: rgba(255,255,255,.8);
+  -webkit-tap-highlight-color: transparent;
+}
+.wl-chip:active  { transform: scale(.95); }
+.wl-chip.active  { background: rgba(255,255,255,.28); color: #fff; box-shadow: 0 0 0 1.5px rgba(255,255,255,.4); }
+.wl-chip.today   { background: rgba(255,255,255,.18); }
+.wl-chip .wl-date { font-weight: 400; opacity: .7; font-size: .62rem; }
+.weather-loc-reset {
+  width: 30px; height: 30px; border-radius: 50%; border: none; flex-shrink: 0;
+  background: rgba(255,255,255,.12); color: rgba(255,255,255,.8);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: .85rem; margin-left: 6px; transition: background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.weather-loc-reset:active { background: rgba(255,255,255,.3); }
+.weather-loc-reset.hidden { display: none; }
 </style>
 </head>
 <body>
@@ -2088,13 +2122,113 @@ function buildHourly(json) {
   return html;
 }
 
+
+// ============================================================
+// WETTER – Dynamischer Ort aus Reisetagen
+// ============================================================
+var weatherLat   = 37.50;       // Default: Catania
+var weatherLon   = 15.09;
+var weatherLabel = 'Catania, Sizilien';
+var weatherActiveDay = null;    // ID des aktiven Tages
+
+// Aktuellen Reisetag ermitteln (nach Datum)
+function getWeatherDayForToday() {
+  var todayStr = new Date().toISOString().slice(0, 10);
+  return (data.days || []).find(function(d) { return d.date === todayStr; }) || null;
+}
+
+// Orts-Chips aus Reisetagen bauen
+function buildLocationBar() {
+  var days = (data.days || []).filter(function(d) { return d.weather_lat && d.weather_lon; });
+  if (!days.length) return '';
+
+  var todayStr = new Date().toISOString().slice(0, 10);
+  var dayNames = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+
+  var chips = days.map(function(d, i) {
+    var isToday  = d.date === todayStr;
+    var isActive = d.id === weatherActiveDay;
+    var date     = new Date(d.date + 'T12:00:00');
+    var dayShort = dayNames[date.getDay()] + ' ' + date.getDate() + '.' + (date.getMonth()+1) + '.';
+    var label    = d.weather_label || d.label || 'Tag ' + d.day_number;
+    return '<button class="wl-chip' + (isActive ? ' active' : '') + (isToday ? ' today' : '') + '"'
+      + ' onclick="window.weatherSelectDay(\'' + d.id + '\')">'
+      + (isToday ? '&#x25CF; ' : '')
+      + label
+      + '<span class="wl-date">&nbsp;' + dayShort + '</span>'
+      + '</button>';
+  }).join('');
+
+  // Reset-Button: nur anzeigen wenn nicht auf aktuellem Tag
+  var todayDay = getWeatherDayForToday();
+  var showReset = todayDay && weatherActiveDay && weatherActiveDay !== (todayDay && todayDay.id);
+
+  return '<div class="weather-location-bar">'
+    + '<div class="weather-loc-chips" id="wl-chips">' + chips + '</div>'
+    + '<button class="weather-loc-reset' + (showReset ? '' : ' hidden') + '"'
+    + ' id="wl-reset" onclick="window.weatherResetToday()" title="Aktuellen Ort anzeigen">&#x2316;</button>'
+    + '</div>';
+}
+
+// Ort aus Reisetag setzen + Wetter laden
+window.weatherSelectDay = async function(dayId) {
+  var day = (data.days || []).find(function(d) { return d.id === dayId; });
+  if (!day || !day.weather_lat) return;
+  weatherLat        = parseFloat(day.weather_lat);
+  weatherLon        = parseFloat(day.weather_lon);
+  weatherLabel      = (day.weather_label || day.label || 'Sizilien') + ', Sizilien';
+  weatherActiveDay  = dayId;
+  await loadWeather();
+  // Chips neu rendern (active-Klasse)
+  var chips = document.getElementById('wl-chips');
+  if (chips) {
+    var days     = (data.days || []).filter(function(d){ return d.weather_lat && d.weather_lon; });
+    var todayStr = new Date().toISOString().slice(0, 10);
+    var dayNames = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+    chips.innerHTML = days.map(function(d) {
+      var isToday  = d.date === todayStr;
+      var isActive = d.id === weatherActiveDay;
+      var date     = new Date(d.date + 'T12:00:00');
+      var dayShort = dayNames[date.getDay()] + ' ' + date.getDate() + '.' + (date.getMonth()+1) + '.';
+      var label    = d.weather_label || d.label || 'Tag ' + d.day_number;
+      return '<button class="wl-chip' + (isActive?' active':'') + (isToday?' today':'') + '"'
+        + ' onclick="window.weatherSelectDay(\'' + d.id + '\')">'
+        + (isToday?'&#x25CF; ':'') + label
+        + '<span class="wl-date">&nbsp;' + dayShort + '</span></button>';
+    }).join('');
+  }
+  // Reset-Button
+  var todayDay = getWeatherDayForToday();
+  var reset    = document.getElementById('wl-reset');
+  if (reset) reset.classList.toggle('hidden', !todayDay || weatherActiveDay === (todayDay && todayDay.id));
+};
+
+// Zurück zum aktuellen Ort
+window.weatherResetToday = async function() {
+  var todayDay = getWeatherDayForToday();
+  if (todayDay && todayDay.weather_lat) {
+    await window.weatherSelectDay(todayDay.id);
+  }
+};
+
+// Standard-Ort beim Laden aus heutigem Reisetag ermitteln
+function initWeatherLocation() {
+  var todayDay = getWeatherDayForToday();
+  if (todayDay && todayDay.weather_lat) {
+    weatherLat       = parseFloat(todayDay.weather_lat);
+    weatherLon       = parseFloat(todayDay.weather_lon);
+    weatherLabel     = (todayDay.weather_label || todayDay.label || 'Sizilien') + ', Sizilien';
+    weatherActiveDay = todayDay.id;
+  }
+}
+
 async function loadWeather() {
   var w = el('weather-widget');
   if (!w) return;
   w.innerHTML = '<p style="color:var(--text-soft);font-size:.8rem;padding:8px 0">&#127757; Wetter wird geladen&hellip;</p>';
   try {
     var url = 'https://api.open-meteo.com/v1/forecast'
-      + '?latitude=37.50&longitude=15.09'
+      + '?latitude=' + weatherLat + '&longitude=' + weatherLon
       + '&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m'
       + '&hourly=temperature_2m,weather_code,precipitation_probability'
       + '&daily=weather_code,temperature_2m_max,temperature_2m_min'
@@ -2129,7 +2263,7 @@ async function loadWeather() {
       + '<div class="weather-meta">Gef&uuml;hlt ' + feel + '&deg;C'
       + ' &middot; Wind ' + wind + ' km/h'
       + ' &middot; Luft ' + humi + '%</div>'
-      + '<div class="weather-city">&#128205; Catania, Sizilien &middot; ' + now + ' Uhr</div>'
+      + '<div class="weather-city">&#128205; ' + weatherLabel + ' &middot; ' + now + ' Uhr</div>'
       + tmrStr
       + '</div>'
       + '<button class="weather-refresh-btn" id="weather-refresh-btn" onclick="window.refreshWeather()" title="Aktualisieren" style="position:static;flex-shrink:0;margin-top:0">'
@@ -2139,6 +2273,7 @@ async function loadWeather() {
       + '</svg></button>'
       + '</div>'
       + hourlyHtml
+      + buildLocationBar()
       + '</div>';
     DB.log('Wetter: ' + temp + 'C, ' + desc, 'ok');
     // Zur aktuellen Stunde scrollen
@@ -2175,6 +2310,7 @@ async function loadPublicHeadsets() {
 }
 
 async function bootData() {
+  initWeatherLocation();
   loadWeather();
   DB.log('App gestartet – Host: ' + location.hostname, 'info');
   DB.log('Online: ' + navigator.onLine, navigator.onLine ? 'ok' : 'warn');
@@ -2187,6 +2323,7 @@ async function bootData() {
     DB.log('Netzwerk-Fetch fehlgeschlagen – lade Cache…', 'warn');
     await loadCached();
   }
+  initWeatherLocation();
   render();
   renderInfoView();
   await loadPublicHeadsets();

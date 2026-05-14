@@ -1044,6 +1044,19 @@ html, body {
 .wh-icon  { font-size: 1.1rem; line-height: 1; }
 .wh-temp  { font-size: .75rem; font-weight: 700; color: rgba(255,255,255,.95); }
 .wh-rain  { font-size: .58rem; color: rgba(120,200,255,.8); font-weight: 600; min-height: 10px; }
+
+/* ── WETTER TAG-TRENNER ── */
+.wh-day-sep {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: flex-end; padding: 0 6px 8px; flex-shrink: 0;
+  min-width: 44px;
+}
+.wh-day-sep span {
+  font-size: .58rem; font-weight: 700; color: rgba(255,255,255,.5);
+  text-transform: uppercase; letter-spacing: .7px;
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  white-space: nowrap;
+}
 </style>
 </head>
 <body>
@@ -2012,37 +2025,55 @@ function buildHourly(json) {
   var codes  = json.hourly.weather_code              || [];
   var rains  = json.hourly.precipitation_probability || [];
 
-  // Nur heute 06:00–22:00
-  var todayDate = new Date().toISOString().slice(0, 10);
-  var nowHour   = new Date().getHours();
+  var now      = new Date();
+  var nowHour  = now.getHours();
+  var cutoff   = new Date(now.getTime() + 48 * 60 * 60 * 1000); // +48h
+
+  // Wochentags-Namen für Tag-Trenner
+  var dayNames = ['So','Mo','Di','Mi','Do','Fr','Sa'];
 
   var slots = [];
   for (var i = 0; i < times.length; i++) {
     var t = times[i]; // "2026-05-15T08:00"
-    if (!t.startsWith(todayDate)) continue;
+    var slotDate = new Date(t + ':00'); // parse as local
+    if (slotDate < now)     continue;  // vergangene Stunden überspringen
+    if (slotDate > cutoff)  break;     // nach 48h aufhören
     var hour = parseInt(t.slice(11, 13));
-    if (hour < 6 || hour > 22) continue;
+    var dateStr = t.slice(0, 10);
     slots.push({
-      hour:  hour,
-      temp:  Math.round(temps[i]),
-      code:  codes[i],
-      rain:  rains[i],
-      isNow: hour === nowHour
+      hour:    hour,
+      dateStr: dateStr,
+      temp:    Math.round(temps[i]),
+      code:    codes[i],
+      rain:    rains[i] || 0,
+      isNow:   hour === nowHour && dateStr === now.toISOString().slice(0,10)
     });
   }
 
   if (!slots.length) return '';
 
   var html = '<div class="weather-hourly">';
+  var lastDate = '';
+
   for (var j = 0; j < slots.length; j++) {
-    var s    = slots[j];
-    var icon = WICONS[s.code] || '&#127777;';
+    var s = slots[j];
+
+    // Tag-Trenner wenn neues Datum
+    if (s.dateStr !== lastDate) {
+      lastDate = s.dateStr;
+      var d = new Date(s.dateStr + 'T12:00:00');
+      var isToday    = s.dateStr === now.toISOString().slice(0,10);
+      var isTomorrow = !isToday;
+      var dayLabel   = isToday ? 'Heute' : (isTomorrow ? 'Morgen · ' + dayNames[d.getDay()] : dayNames[d.getDay()]);
+      html += '<div class="wh-day-sep"><span>' + dayLabel + '</span></div>';
+    }
+
+    var icon    = WICONS[s.code] || '&#127777;';
     var rainStr = s.rain > 0 ? s.rain + '%' : '';
     var nowBadge = s.isNow
-      ? '<span style="font-size:.52rem;font-weight:700;color:rgba(255,255,255,.9);'
-      + 'background:rgba(255,255,255,.2);border-radius:4px;padding:1px 4px;margin-top:1px">'
-      + 'Jetzt</span>'
+      ? '<span style="font-size:.52rem;font-weight:700;color:rgba(255,255,255,.9);background:rgba(255,255,255,.2);border-radius:4px;padding:1px 4px;margin-top:1px">Jetzt</span>'
       : '<span style="min-height:14px;display:block"></span>';
+
     html += '<div class="wh-slot' + (s.isNow ? ' now' : '') + '">'
       + '<span class="wh-time">' + String(s.hour).padStart(2,'0') + ':00</span>'
       + '<span class="wh-icon">' + icon + '</span>'
@@ -2065,7 +2096,7 @@ async function loadWeather() {
       + '&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m'
       + '&hourly=temperature_2m,weather_code,precipitation_probability'
       + '&daily=weather_code,temperature_2m_max,temperature_2m_min'
-      + '&wind_speed_unit=kmh&timezone=Europe%2FRome&forecast_days=2';
+      + '&wind_speed_unit=kmh&timezone=Europe%2FRome&forecast_days=3';
     var res  = await fetch(url);
     var json = await res.json();
     var cur  = json.current;
